@@ -30,10 +30,10 @@ defmodule ExAcme do
 
     - `:directory_url` - The URL of the ACME directory.
     - `:finch` - The module name or pid of the Finch HTTP client to use.
+    - Other options to pass to `Agent` like `:name`.
   """
   @spec start_link(Keyword.t()) :: client()
   def start_link(options) do
-    options = Keyword.validate!(options, [:directory_url, :finch])
     directory_url = expand_directory(Keyword.fetch!(options, :directory_url))
     finch = Keyword.fetch!(options, :finch)
 

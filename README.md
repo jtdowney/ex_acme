@@ -27,6 +27,17 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 
 ## Examples
 
+### Starting the client
+
+ExAcme needs a running Finch process to interact with the ACME server. You can add ExAcme and Finch to your supervision tree.
+
+```elixir
+children = [
+  {Finch, name: MyFinch},
+  {ExAcme, name: MyAcme, directory_url: :lets_encrypt_staging, finch: MyFinch}
+]
+```
+
 ### Registering an account
 
 To register a new account with the ACME server, you need to generate an account key, create a registration, and agree to the terms of service.
