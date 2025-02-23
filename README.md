@@ -1,6 +1,6 @@
 # ExAcme
 
-ExAcme is a lightweight, developer-friendly Elixir library for interacting with [RFC 8555-compliant](https://tools.ietf.org/html/rfc8555) ACME servers like [Let’s Encrypt](https://letsencrypt.org). It simplifies the process of managing X.509 (TLS/SSL) certificates by providing a straightforward API for registering accounts, handling domain challenges, and issuing certificates.
+ExAcme is a lightweight, developer-friendly Elixir library for interacting with [RFC 8555-compliant](https://tools.ietf.org/html/rfc8555) ACME servers like [Let's Encrypt](https://letsencrypt.org). It simplifies the process of managing X.509 (TLS/SSL) certificates by providing a straightforward API for registering accounts, handling domain challenges, and issuing certificates.
 
 ## Features
 
@@ -9,7 +9,11 @@ ExAcme is a lightweight, developer-friendly Elixir library for interacting with 
 
 ## Missing
 
-- Handling external account binding
+- [Handling external account binding](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
+- [Account key change](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5)
+- [Account deactivation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.6)
+- [Certificate revocation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.6)
+- [Renewal information extension (DRAFT)](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/)
 
 ## Installation
 
