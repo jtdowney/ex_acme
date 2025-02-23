@@ -28,7 +28,9 @@ defmodule ExAcme do
 
   ## Options
 
-    - `:directory_url` - The URL of the ACME directory.
+    - `:directory_url` - The URL of the ACME directory. The value can be
+      `:lets_encrypt` or `:lets_encrypt_staging` to use the Let's Encrypt
+      production or staging directory URL or a custom directory URL.
     - `:finch` - The module name or pid of the Finch HTTP client to use.
     - Other options to pass to `Agent` like `:name`.
   """
