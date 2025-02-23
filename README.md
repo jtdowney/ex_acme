@@ -45,9 +45,6 @@ To register a new account with the ACME server, you need to generate an account 
 ```elixir
 alias ExAcme.{AccountKey, Registration}
 
-Finch.start_link(name: MyFinch)
-{:ok, client} = ExAcme.start_link(directory_url: :lets_encrypt_staging, finch: MyFinch)
-
 # Generate a new account key
 account_key = AccountKey.generate()
 
@@ -58,7 +55,7 @@ registration =
   |> Registration.agree_to_terms()
 
 # Register the account
-case Registration.register(registration, account_key, client) do
+case Registration.register(registration, account_key, MyAcme) do
   {:ok, account} ->
     IO.puts("Account registered successfully!")
     IO.inspect(account)
@@ -83,7 +80,7 @@ order_request =
   |> OrderRequest.add_dns_identifier("www.example.com")
 
 # Submit the order
-case OrderRequest.submit(order_request, account_key, client) do
+case OrderRequest.submit(order_request, account_key, MyAcme) do
   {:ok, order} ->
     IO.puts("Order created successfully!")
     IO.inspect(order)
@@ -102,7 +99,7 @@ After creating an order, you need to complete the necessary challenges to prove 
 alias ExAcme.{Authorization, Challenge}
 
 for auth_url <- order.authorizations do
-  {:ok, authorization} = Authorization.fetch(auth_url, account_key, client)
+  {:ok, authorization} = Authorization.fetch(auth_url, account_key, MyAcme)
   challenge = Challenge.find_by_type(authorization, "dns-01")
 
   if challenge do
@@ -111,11 +108,11 @@ for auth_url <- order.authorizations do
     setup_challenge(authorization.identifier["value"], value)
 
     # Trigger validation
-    {:ok, _validated_challenge} = Challenge.trigger_validation(challenge.url, account_key, client)
+    {:ok, _validated_challenge} = Challenge.trigger_validation(challenge.url, account_key, MyAcme)
 
     # Optionally, wait and verify the challenge status
     :timer.sleep(5000)
-    {:ok, validated_challenge} = Challenge.fetch(challenge.url, account_key, client)
+    {:ok, validated_challenge} = Challenge.fetch(challenge.url, account_key, MyAcme)
 
     if validated_challenge.status == "valid" do
       IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
@@ -142,7 +139,7 @@ private_key = X509.PrivateKey.new_ec(:secp256r1)
 csr = Certificate.csr_from_order(order, private_key)
 
 # Finalize the order by submitting the CSR
-case Order.finalize(order.finalize_url, csr, account_key, client) do
+case Order.finalize(order.finalize_url, csr, account_key, MyAcme) do
   {:ok, finalized_order} ->
     IO.puts("Order finalized successfully!")
     IO.inspect(finalized_order)
@@ -160,7 +157,7 @@ Once the order is finalized and the certificate is issued, you can fetch the cer
 ```elixir
 alias ExAcme.Certificate
 
-case Certificate.fetch(finalized_order.certificate_url, account_key, client) do
+case Certificate.fetch(finalized_order.certificate_url, account_key, MyAcme) do
   {:ok, certificates} ->
     Enum.each(certificates, fn cert ->
       IO.puts("Fetched Certificate:")
