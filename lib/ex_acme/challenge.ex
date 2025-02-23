@@ -1,6 +1,6 @@
 defmodule ExAcme.Challenge do
   @moduledoc """
-  Represents an [ACME Challenge object](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.5).
+  Represents an [ACME Challenge object](https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.5).
 
   Provides functionalities to handle challenges required for validation.
 

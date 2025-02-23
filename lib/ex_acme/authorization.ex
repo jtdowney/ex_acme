@@ -1,6 +1,6 @@
 defmodule ExAcme.Authorization do
   @moduledoc """
-  Represents an [ACME Authorization object](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.4).
+  Represents an [ACME Authorization object](https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.4).
 
   Provides functionalities to fetch and process authorization details from the ACME server.
 

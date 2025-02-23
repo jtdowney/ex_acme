@@ -1,6 +1,6 @@
 defmodule ExAcme.Account do
   @moduledoc """
-  Represents an [ACME Account object](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.2).
+  Represents an [ACME Account object](https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2).
 
   Provides functionalities to fetch account details from the ACME server.
 

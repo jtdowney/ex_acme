@@ -1,6 +1,6 @@
 defmodule ExAcme.Registration do
   @moduledoc """
-  Represents an [ACME Account registration](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.3).
+  Represents an [ACME Account registration](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3).
 
   Provides functionalities to create and manage account registrations with the ACME server.
 

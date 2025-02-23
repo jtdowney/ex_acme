@@ -1,6 +1,6 @@
 defmodule ExAcme.OrderRequest do
   @moduledoc """
-  Represents an [ACME Order request](https://www.rfc-editor.org/rfc/rfc8555.html#section-7.4).
+  Represents an [ACME Order request](https://datatracker.ietf.org/doc/html/rfc8555#section-7.4).
 
   Provides functionalities to build and submit order requests to the ACME server.
 
