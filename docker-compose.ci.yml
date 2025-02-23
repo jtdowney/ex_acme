@@ -1,0 +1,4 @@
+services:
+  ex_acme:
+    image: ex_acme:latest
+    build: !reset null
