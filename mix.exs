@@ -7,10 +7,11 @@ defmodule ExAcme.MixProject do
       name: "ExAcme",
       version: "0.1.0",
       elixir: "~> 1.15",
-      licenses: ["MIT"],
       source_url: "https://github.com/jtdowney/ex_acme",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
+      package: package(),
+      description: description(),
       docs: docs(),
       deps: deps(),
       aliases: aliases()
@@ -25,6 +26,18 @@ defmodule ExAcme.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp package do
+    [
+      maintainers: ["John Downey"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/jtdowney/ex_acme"}
+    ]
+  end
+
+  defp description do
+    "A library for interacting with ACME servers like Let's Encrypt."
+  end
 
   defp docs do
     [
