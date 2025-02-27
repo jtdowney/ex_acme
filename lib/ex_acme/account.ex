@@ -42,7 +42,7 @@ defmodule ExAcme.Account do
   @spec fetch(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) ::
           {:ok, ExAcme.Account.t()} | {:error, term()}
   def fetch(url, account_key, client) do
-    request = %ExAcme.SimpleRequest{url: url}
+    request = ExAcme.Request.build_fetch(url)
 
     with {:ok, response} <- ExAcme.send_request(request, account_key, client) do
       {:ok, from_response(url, response.body)}

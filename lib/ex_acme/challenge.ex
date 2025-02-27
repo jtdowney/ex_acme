@@ -66,7 +66,7 @@ defmodule ExAcme.Challenge do
   """
   @spec fetch(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
   def fetch(url, account_key, client) do
-    request = %ExAcme.SimpleRequest{url: url}
+    request = ExAcme.Request.build_fetch(url)
 
     with {:ok, response} <- ExAcme.send_request(request, account_key, client) do
       {:ok, from_response(url, response.body)}
@@ -102,7 +102,7 @@ defmodule ExAcme.Challenge do
   """
   @spec trigger_validation(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
   def trigger_validation(url, account_key, client) do
-    request = %ExAcme.SimpleRequest{url: url, body: %{}}
+    request = ExAcme.Request.build_update(url, %{})
 
     with {:ok, %{body: body}} <- ExAcme.send_request(request, account_key, client) do
       {:ok, from_response(url, body)}

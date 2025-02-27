@@ -140,27 +140,19 @@ defmodule ExAcme.OrderRequest do
   """
   @spec submit(t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, ExAcme.Order.t()} | {:error, term()}
   def submit(order, account_key, client) do
-    with {:ok, %{body: body, headers: headers}} <-
-           ExAcme.send_request(order, account_key, client) do
-      location = Map.get(headers, "location")
-      order = ExAcme.Order.from_response(location, body)
-      {:ok, order}
-    end
-  end
-end
-
-defimpl ExAcme.Request, for: ExAcme.OrderRequest do
-  @doc false
-  def to_request(order, %{directory: %{"newOrder" => url}}) do
     body =
       order
       |> Map.from_struct()
       |> Map.reject(fn {_, value} -> value == nil end)
       |> ExAcme.Utils.to_camel_case()
 
-    %{
-      url: url,
-      body: body
-    }
+    request = ExAcme.Request.build_named("newOrder", body, client)
+
+    with {:ok, %{body: body, headers: headers}} <-
+           ExAcme.send_request(request, account_key, client) do
+      location = Map.get(headers, "location")
+      order = ExAcme.Order.from_response(location, body)
+      {:ok, order}
+    end
   end
 end

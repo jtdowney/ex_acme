@@ -114,19 +114,17 @@ defmodule ExAcme do
     - `client` - The ExAcme client agent.
   """
   @spec send_request(ExAcme.Request.t(), ExAcme.AccountKey.t(), Agent.agent()) :: {:ok, map()} | {:error, any()}
-  def send_request(acme_request, account_key, client) do
-    state = Agent.get(client, & &1)
-    request = ExAcme.Request.to_request(acme_request, state)
-    nonce = state.nonce
+  def send_request(request, account_key, client) do
+    %{nonce: nonce, finch: finch} = Agent.get(client, & &1)
     message_headers = %{"nonce" => nonce, "url" => request.url}
     body = sign_body(account_key, request.body, message_headers)
     user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
     request_headers = [{"Content-Type", @content_type}, {"User-Agent", user_agent}]
 
     with {:ok, body} <- Jason.encode(body),
-         request = Finch.build(:post, request.url, request_headers, body),
+         finch_request = Finch.build(:post, request.url, request_headers, body),
          {:ok, %Finch.Response{status: status, body: body, headers: headers}} <-
-           Finch.request(request, state.finch) do
+           Finch.request(finch_request, finch) do
       refresh_nonce(client, headers)
 
       content_type =
@@ -145,7 +143,7 @@ defmodule ExAcme do
 
       case {status, body} do
         {400, %{"type" => "urn:ietf:params:acme:error:badNonce"}} ->
-          ExAcme.send_request(acme_request, account_key, client)
+          ExAcme.send_request(request, account_key, client)
 
         {status, body} when status >= 400 ->
           body =

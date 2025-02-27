@@ -90,27 +90,19 @@ defmodule ExAcme.Registration do
     only_return_existing = Keyword.get(opts, :only_return_existing, false)
     registration = %{registration | only_return_existing: only_return_existing}
 
-    with {:ok, %{body: body, headers: headers}} <-
-           ExAcme.send_request(registration, account_key, client) do
-      location = Map.get(headers, "location")
-      account = ExAcme.Account.from_response(location, body)
-      {:ok, account}
-    end
-  end
-end
-
-defimpl ExAcme.Request, for: ExAcme.Registration do
-  @doc false
-  def to_request(registration, %{directory: %{"newAccount" => url}}) do
     body =
       registration
       |> Map.from_struct()
       |> Map.reject(fn {_, value} -> value == nil end)
       |> ExAcme.Utils.to_camel_case()
 
-    %{
-      url: url,
-      body: body
-    }
+    request = ExAcme.Request.build_named("newAccount", body, client)
+
+    with {:ok, %{body: body, headers: headers}} <-
+           ExAcme.send_request(request, account_key, client) do
+      location = Map.get(headers, "location")
+      account = ExAcme.Account.from_response(location, body)
+      {:ok, account}
+    end
   end
 end

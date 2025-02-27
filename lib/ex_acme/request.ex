@@ -1,14 +1,89 @@
-defprotocol ExAcme.Request do
-  @doc false
-  def to_request(object, directory)
-end
+defmodule ExAcme.Request do
+  @moduledoc """
+  Provides functions to build and manage HTTP requests for the ACME API.
+  """
 
-defmodule ExAcme.SimpleRequest do
-  @moduledoc false
   defstruct [:url, :body]
-end
 
-defimpl ExAcme.Request, for: ExAcme.SimpleRequest do
-  @doc false
-  def to_request(request, _directory), do: request
+  @typedoc "The type of the request body."
+  @type body :: String.t() | map()
+
+  @typedoc "Request object"
+  @type t :: %__MODULE__{
+          url: String.t(),
+          body: body()
+        }
+
+  @doc """
+  Builds a fetch request with the given URL.
+
+  ## Parameters
+
+    - `url`: The URL to fetch.
+
+  ## Returns
+
+    - `%ExAcme.Request{}`: A request struct with the specified URL and an empty body.
+  """
+  @spec build_fetch(String.t()) :: t()
+  def build_fetch(url) do
+    %__MODULE__{
+      url: url,
+      body: ""
+    }
+  end
+
+  @doc """
+  Builds an update request with the given URL and body.
+
+  ## Parameters
+
+    - `url`: The URL to send the update to.
+    - `body`: The content of the request body.
+
+  ## Returns
+
+    - `%ExAcme.Request{}`: A request struct with the specified URL and body.
+  """
+  @spec build_update(String.t(), body()) :: t()
+  def build_update(url, body) do
+    %__MODULE__{
+      url: url,
+      body: body
+    }
+  end
+
+  @doc """
+  Builds a named request by looking up the URL based on the given name and client.
+
+  ## Parameters
+
+    - `name`: The name identifier for the request URL.
+    - `body`: The content of the request body.
+    - `client`: The client used to fetch the directory information.
+
+  ## Returns
+
+    - `%ExAcme.Request{}`: A request struct with the looked-up URL and specified body.
+
+  ## Examples
+
+      iex> ExAcme.Request.build_named("newOrder", %{data: "value"}, client)
+      %ExAcme.Request{
+        url: "https://api.example.com/new-order",
+        body: %{data: "value"}
+      }
+  """
+  @spec build_named(String.t(), body(), ExAcme.client()) :: t()
+  def build_named(name, body, client) do
+    %__MODULE__{
+      url: lookup_url(name, client),
+      body: body
+    }
+  end
+
+  defp lookup_url(name, client) do
+    %{directory: directory} = Agent.get(client, & &1)
+    Map.fetch!(directory, name)
+  end
 end

@@ -64,7 +64,7 @@ defmodule ExAcme.Order do
   """
   @spec fetch(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
   def fetch(url, account_key, client) do
-    request = %ExAcme.SimpleRequest{url: url}
+    request = ExAcme.Request.build_fetch(url)
 
     with {:ok, response} <- ExAcme.send_request(request, account_key, client) do
       {:ok, from_response(url, response.body)}
@@ -89,7 +89,7 @@ defmodule ExAcme.Order do
   @spec finalize(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
   def finalize(finalize_url, csr, account_key, client) do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
-    request = %ExAcme.SimpleRequest{url: finalize_url, body: %{csr: csr}}
+    request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
 
     with {:ok, response} <- ExAcme.send_request(request, account_key, client) do
       {:ok, from_response(finalize_url, response.body)}
