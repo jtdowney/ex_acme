@@ -31,7 +31,10 @@ defmodule ExAcme.MixProject do
     [
       maintainers: ["John Downey"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/jtdowney/ex_acme"}
+      links: %{
+        "GitHub" => "https://github.com/jtdowney/ex_acme",
+        "Changelog" => "https://github.com/jtdowney/ex_acme/blob/main/CHANGELOG.md"
+      }
     ]
   end
 

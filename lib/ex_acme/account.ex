@@ -49,6 +49,36 @@ defmodule ExAcme.Account do
     end
   end
 
+  @doc """
+  Rotates the account key for the ACME account.
+
+  ## Parameters
+
+    - `old_account_key` - The current account key that needs to be rotated.
+    - `new_account_key` - The new account key to replace the old one.
+    - `client` - The ExAcme client agent responsible for making requests.
+
+  ## Returns
+
+    - `{:ok, new_account_key}` on successful key rotation.
+    - `{:error, reason}` if the key rotation fails.
+  """
+  @spec rotate_key(ExAcme.AccountKey.t(), ExAcme.AccountKey.t(), ExAcme.client()) ::
+          {:ok, ExAcme.AccountKey.t()} | {:error, term()}
+  def rotate_key(%ExAcme.AccountKey{kid: kid} = old_account_key, new_account_key, client) do
+    with {:ok, inner_payload} <- Jason.encode(%{account: kid, oldKey: ExAcme.AccountKey.to_public(old_account_key)}) do
+      url = ExAcme.Request.lookup_named_url("keyChange", client)
+      inner_headers = %{url: url}
+      outer_payload = ExAcme.AccountKey.sign(new_account_key, inner_payload, inner_headers)
+      request = ExAcme.Request.build_update(url, outer_payload)
+
+      with {:ok, _response} <- ExAcme.send_request(request, old_account_key, client) do
+        new_account_key = ExAcme.AccountKey.update_kid(new_account_key, kid)
+        {:ok, new_account_key}
+      end
+    end
+  end
+
   @doc false
   @spec from_response(String.t(), map()) :: ExAcme.Account.t()
   def from_response(url, body) do

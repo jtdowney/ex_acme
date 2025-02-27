@@ -77,12 +77,25 @@ defmodule ExAcme.Request do
   @spec build_named(String.t(), body(), ExAcme.client()) :: t()
   def build_named(name, body, client) do
     %__MODULE__{
-      url: lookup_url(name, client),
+      url: lookup_named_url(name, client),
       body: body
     }
   end
 
-  defp lookup_url(name, client) do
+  @doc """
+  Looks up the URL associated with a given name from the client's directory.
+
+  ## Parameters
+
+    - `name`: The name identifier for the request URL.
+    - `client`: The client used to fetch the directory information.
+
+  ## Returns
+
+    - `String.t()`: The URL associated with the given name.
+  """
+  @spec lookup_named_url(String.t(), ExAcme.client()) :: String.t()
+  def lookup_named_url(name, client) do
     %{directory: directory} = Agent.get(client, & &1)
     Map.fetch!(directory, name)
   end
