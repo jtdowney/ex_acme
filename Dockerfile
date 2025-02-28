@@ -24,6 +24,7 @@ RUN mix deps.get
 
 RUN mix deps.compile
 RUN env MIX_ENV=test mix deps.compile
+RUN mix dialyzer.build
 
 COPY . ./
 

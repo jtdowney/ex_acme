@@ -22,3 +22,4 @@ ex_acme-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 .aider*
+.elixir_ls

@@ -1,0 +1,11 @@
+*.ez
+.aider*
+.elixir_ls
+.git
+_build
+cover
+deps
+doc
+erl_crash.dump
+ex_acme-*.tar
+tmp
