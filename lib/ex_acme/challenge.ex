@@ -31,14 +31,14 @@ defmodule ExAcme.Challenge do
 
   ## Parameters
 
-    - `authorization` - The authorization map.
+    - `authorization` - The authorization object.
     - `type` - The type of challenge to find (e.g., "dns-01").
 
   ## Returns
 
     - The challenge object if found, else `nil`.
   """
-  @spec find_by_type(map(), String.t()) :: t() | nil
+  @spec find_by_type(ExAcme.Authorization.t(), String.t()) :: t() | nil
   def find_by_type(authorization, type) do
     case Enum.find(authorization.challenges, &(Map.get(&1, "type") == type)) do
       nil ->
@@ -47,29 +47,6 @@ defmodule ExAcme.Challenge do
       challenge ->
         {url, challenge} = Map.pop(challenge, "url")
         from_response(url, challenge)
-    end
-  end
-
-  @doc """
-  Fetches a challenge from the ACME server.
-
-  ## Parameters
-
-    - `url` - The challenge URL.
-    - `account_key` - The account key for authentication.
-    - `client` - The ExAcme client agent.
-
-  ## Returns
-
-    - `{:ok, challenge}` on success.
-    - `{:error, reason}` on failure.
-  """
-  @spec fetch(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
-  def fetch(url, account_key, client) do
-    request = ExAcme.Request.build_fetch(url)
-
-    with {:ok, response} <- ExAcme.send_request(request, account_key, client) do
-      {:ok, from_response(url, response.body)}
     end
   end
 
@@ -84,29 +61,6 @@ defmodule ExAcme.Challenge do
       validated: ExAcme.Utils.datetime_from_rfc3339(challenge["validated"]),
       error: challenge["error"]
     }
-  end
-
-  @doc """
-  Triggers the validation of a challenge.
-
-  ## Parameters
-
-    - `url` - The challenge URL.
-    - `account_key` - The account key for authentication.
-    - `client` - The ExAcme client agent.
-
-  ## Returns
-
-    - `{:ok, challenge}` on success.
-    - `{:error, reason}` on failure.
-  """
-  @spec trigger_validation(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
-  def trigger_validation(url, account_key, client) do
-    request = ExAcme.Request.build_update(url, %{})
-
-    with {:ok, %{body: body}} <- ExAcme.send_request(request, account_key, client) do
-      {:ok, from_response(url, body)}
-    end
   end
 
   @doc """

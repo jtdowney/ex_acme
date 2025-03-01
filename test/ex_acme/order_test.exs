@@ -6,48 +6,113 @@ defmodule ExAcme.OrderTest do
   @private_key X509.PrivateKey.from_pem!(File.read!("test/fixtures/private_rsa_key"))
 
   setup %{client: client} do
-    account_key = ExAcme.AccountKey.generate()
+    key = ExAcme.generate_key()
+    {account_key, _} = ExAcme.TestHelpers.create_account(key, client)
 
-    {account_key, _} = ExAcme.TestHelpers.create_account(account_key, client)
-
-    %{client: client, key: account_key}
+    %{client: client, account_key: account_key}
   end
 
-  test "fetch an existing order", %{client: client, key: account_key} do
-    {:ok, %{url: url} = order} =
-      ExAcme.OrderRequest.new()
-      |> ExAcme.OrderRequest.add_dns_identifier("example.com")
-      |> ExAcme.OrderRequest.submit(account_key, client)
+  test "fetch an existing order", %{client: client, account_key: account_key} do
+    {:ok, %{url: url} = order} = ExAcme.TestHelpers.create_order(account_key, client)
 
-    {:ok, found_order} = ExAcme.Order.fetch(url, account_key, client)
+    {:ok, found_order} = ExAcme.fetch_order(url, account_key, client)
 
     assert order == found_order
   end
 
-  test "fetch a non-existing order", %{client: client, key: account_key} do
-    directory = ExAcme.directory(client)
-
+  test "fetch a non-existing order", %{client: client, account_key: account_key} do
     url =
-      directory["newOrder"]
+      client
+      |> ExAcme.directory()
+      |> Map.fetch!("newOrder")
       |> URI.new!()
       |> URI.merge("/my-order/missing")
       |> URI.to_string()
 
-    assert {:error, {:http_error, 404}} = ExAcme.Order.fetch(url, account_key, client)
+    assert {:error, {:http_error, 404}} = ExAcme.fetch_order(url, account_key, client)
   end
 
-  test "finalize an order", %{client: client, key: account_key} do
-    {:ok, order} =
-      ExAcme.OrderRequest.new()
-      |> ExAcme.OrderRequest.add_dns_identifier(Faker.Internet.domain_name())
-      |> ExAcme.OrderRequest.submit(account_key, client)
-
+  test "finalize an order", %{client: client, account_key: account_key} do
+    {:ok, order} = ExAcme.TestHelpers.create_order(account_key, client)
     ExAcme.TestHelpers.validate_order(order, account_key, client)
-    csr = ExAcme.Certificate.csr_from_order(order, @private_key)
+    csr = ExAcme.Order.to_csr(order, @private_key)
 
-    {:ok, _} = ExAcme.Order.finalize(order.finalize_url, csr, account_key, client)
+    {:ok, _} = ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 
     assert_eventually {:ok, %{status: "valid"}} =
-                        ExAcme.Order.fetch(order.url, account_key, client)
+                        ExAcme.fetch_order(order.url, account_key, client)
+  end
+
+  test "creating an order request", %{client: client, account_key: account_key} do
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.status == "pending"
+    assert order.identifiers == [%{"type" => "dns", "value" => "example.com"}]
+  end
+
+  test "creating an order request without the builder", %{client: client, account_key: account_key} do
+    {:ok, order} =
+      ExAcme.submit_order(
+        %{
+          identifiers: [%{"type" => "dns", "value" => "example.com"}]
+        },
+        account_key,
+        client
+      )
+
+    assert order.status == "pending"
+    assert order.identifiers == [%{"type" => "dns", "value" => "example.com"}]
+  end
+
+  test "creating an order with multiple domains", %{client: client, account_key: account_key} do
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.org")
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.status == "pending"
+
+    assert Enum.sort_by(order.identifiers, & &1["value"]) == [
+             %{"type" => "dns", "value" => "example.com"},
+             %{"type" => "dns", "value" => "example.org"}
+           ]
+  end
+
+  test "creating an order with a profile", %{client: client, account_key: account_key} do
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      |> ExAcme.OrderBuilder.profile("shortlived")
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.profile == "shortlived"
+  end
+
+  test "creating an order with a not before", %{client: client, account_key: account_key} do
+    not_before = DateTime.add(DateTime.utc_now(), 1, :day)
+
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      |> ExAcme.OrderBuilder.not_before(not_before)
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.not_before == not_before
+  end
+
+  test "creating an order with a not after", %{client: client, account_key: account_key} do
+    not_after = DateTime.add(DateTime.utc_now(), 90, :day)
+
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      |> ExAcme.OrderBuilder.not_after(not_after)
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.not_after == not_after
   end
 end

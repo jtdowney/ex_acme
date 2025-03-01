@@ -26,29 +26,6 @@ defmodule ExAcme.Authorization do
           wildcard: boolean()
         }
 
-  @doc """
-  Fetches an authorization from the ACME server.
-
-  ## Parameters
-
-    - `url` - The authorization URL.
-    - `account_key` - The account key for authentication.
-    - `client` - The ExAcme client agent.
-
-  ## Returns
-
-    - `{:ok, authorization}` on success.
-    - `{:error, reason}` on failure.
-  """
-  @spec fetch(String.t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, t()} | {:error, term()}
-  def fetch(url, account_key, client) do
-    request = ExAcme.Request.build_fetch(url)
-
-    with {:ok, %{body: body}} <- ExAcme.send_request(request, account_key, client) do
-      {:ok, from_response(url, body)}
-    end
-  end
-
   @doc false
   @spec from_response(String.t(), map()) :: t()
   def from_response(url, body) do

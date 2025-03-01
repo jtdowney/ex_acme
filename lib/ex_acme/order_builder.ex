@@ -1,4 +1,4 @@
-defmodule ExAcme.OrderRequest do
+defmodule ExAcme.OrderBuilder do
   @moduledoc """
   Represents an [ACME Order request](https://datatracker.ietf.org/doc/html/rfc8555#section-7.4).
 
@@ -27,10 +27,10 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - `%ExAcme.OrderRequest{}` struct.
+    - `ExAcme.OrderBuilder` struct.
   """
-  @spec new() :: t()
-  def new do
+  @spec new_order() :: t()
+  def new_order do
     %__MODULE__{
       identifiers: [],
       profile: nil,
@@ -50,7 +50,7 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - Updated `%ExAcme.OrderRequest{}` struct.
+    - Updated `ExAcme.OrderBuilder` struct.
   """
   def add_identifier(%__MODULE__{identifiers: identifiers} = order, type, value) do
     %{order | identifiers: [%{type: type, value: value} | identifiers]}
@@ -66,7 +66,7 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - Updated `%ExAcme.OrderRequest{}` struct.
+    - Updated `ExAcme.OrderBuilder` struct.
   """
   @spec add_dns_identifier(t(), String.t()) :: t()
   def add_dns_identifier(order, domain) do
@@ -83,7 +83,7 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - Updated `%ExAcme.OrderRequest{}` struct.
+    - Updated `ExAcme.OrderBuilder` struct.
   """
   @spec profile(t(), String.t()) :: t()
   def profile(order, profile) do
@@ -100,7 +100,7 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - Updated `%ExAcme.OrderRequest{}` struct.
+    - Updated `ExAcme.OrderBuilder` struct.
   """
   @spec not_after(t(), DateTime.t()) :: t()
   def not_after(order, date) do
@@ -117,7 +117,7 @@ defmodule ExAcme.OrderRequest do
 
   ## Returns
 
-    - Updated `%ExAcme.OrderRequest{}` struct.
+    - Updated `ExAcme.OrderBuilder` struct.
   """
   @spec not_before(t(), DateTime.t()) :: t()
   def not_before(order, date) do
@@ -125,34 +125,24 @@ defmodule ExAcme.OrderRequest do
   end
 
   @doc """
-  Submits the order request to the ACME server.
+  Converts an order request to a map.
+
+  This function transforms the OrderBuilder struct into a map format,
+  removes nil values, and converts keys to camelCase for API compatibility.
 
   ## Parameters
 
-    - `order` - The order request to submit.
-    - `key` - The account key for authentication.
-    - `client` - The ExAcme client agent.
+    - `order` - The order request to convert.
 
   ## Returns
 
-    - `{:ok, order}` on success.
-    - `{:error, reason}` on failure.
+    - A map representation of the order.
   """
-  @spec submit(t(), ExAcme.AccountKey.t(), ExAcme.client()) :: {:ok, ExAcme.Order.t()} | {:error, term()}
-  def submit(order, account_key, client) do
-    body =
-      order
-      |> Map.from_struct()
-      |> Map.reject(fn {_, value} -> value == nil end)
-      |> ExAcme.Utils.to_camel_case()
-
-    request = ExAcme.Request.build_named("newOrder", body, client)
-
-    with {:ok, %{body: body, headers: headers}} <-
-           ExAcme.send_request(request, account_key, client) do
-      location = Map.get(headers, "location")
-      order = ExAcme.Order.from_response(location, body)
-      {:ok, order}
-    end
+  @spec to_map(t()) :: map()
+  def to_map(order) do
+    order
+    |> Map.from_struct()
+    |> Map.reject(fn {_, value} -> value == nil end)
+    |> ExAcme.Utils.to_camel_case()
   end
 end

@@ -1,4 +1,4 @@
-defmodule ExAcme.Registration do
+defmodule ExAcme.RegistrationBuilder do
   @moduledoc """
   Represents an [ACME Account registration](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3).
 
@@ -27,10 +27,10 @@ defmodule ExAcme.Registration do
 
   ## Returns
 
-    - `%ExAcme.Registration{}` struct.
+    - `ExAcme.RegistrationBuilder` struct.
   """
-  @spec new() :: t()
-  def new do
+  @spec new_registration() :: t()
+  def new_registration do
     %__MODULE__{contact: [], terms_of_service_agreed: false, only_return_existing: false, external_account_binding: nil}
   end
 
@@ -44,7 +44,7 @@ defmodule ExAcme.Registration do
 
   ## Returns
 
-    - Updated `%ExAcme.Registration{}` struct.
+    - Updated `ExAcme.RegistrationBuilder` struct.
   """
   @spec contacts(t(), [String.t()] | String.t()) :: t()
   def contacts(registration, contacts) do
@@ -60,7 +60,7 @@ defmodule ExAcme.Registration do
 
   ## Returns
 
-    - Updated `%ExAcme.Registration{}` struct.
+    - Updated `ExAcme.RegistrationBuilder` struct.
   """
   @spec agree_to_terms(t()) :: t()
   def agree_to_terms(registration) do
@@ -68,41 +68,24 @@ defmodule ExAcme.Registration do
   end
 
   @doc """
-  Registers the account with the ACME server.
+  Converts the registration struct to a map.
+
+  This function transforms the RegistrationBuilder struct into a map format,
+  removes nil values, and converts keys to camelCase for API compatibility.
 
   ## Parameters
 
-    - `registration` - The registration struct.
-    - `account_key` - The account key for authentication.
-    - `client` - The ExAcme client agent.
-    - `opts` - Optional parameters.
-
-  ## Options
-
-    - `:only_return_existing` - If true, only existing accounts will be returned.
+    - `registration` - The current registration struct.
 
   ## Returns
 
-    - `{:ok, account}` on success.
-    - `{:error, reason}` on failure.
+    - A map representation of the registration.
   """
-  def register(registration, account_key, client, opts \\ []) do
-    only_return_existing = Keyword.get(opts, :only_return_existing, false)
-    registration = %{registration | only_return_existing: only_return_existing}
-
-    body =
-      registration
-      |> Map.from_struct()
-      |> Map.reject(fn {_, value} -> value == nil end)
-      |> ExAcme.Utils.to_camel_case()
-
-    request = ExAcme.Request.build_named("newAccount", body, client)
-
-    with {:ok, %{body: body, headers: headers}} <-
-           ExAcme.send_request(request, account_key, client) do
-      location = Map.get(headers, "location")
-      account = ExAcme.Account.from_response(location, body)
-      {:ok, account}
-    end
+  @spec to_map(t()) :: map()
+  def to_map(registration) do
+    registration
+    |> Map.from_struct()
+    |> Map.reject(fn {_, value} -> value == nil end)
+    |> ExAcme.Utils.to_camel_case()
   end
 end

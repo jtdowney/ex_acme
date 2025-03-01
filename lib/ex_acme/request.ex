@@ -23,7 +23,7 @@ defmodule ExAcme.Request do
 
   ## Returns
 
-    - `%ExAcme.Request{}`: A request struct with the specified URL and an empty body.
+    - A request struct with the specified URL and an empty body.
   """
   @spec build_fetch(String.t()) :: t()
   def build_fetch(url) do
@@ -43,7 +43,7 @@ defmodule ExAcme.Request do
 
   ## Returns
 
-    - `%ExAcme.Request{}`: A request struct with the specified URL and body.
+    - A request struct with the specified URL and body.
   """
   @spec build_update(String.t(), body()) :: t()
   def build_update(url, body) do
@@ -64,15 +64,7 @@ defmodule ExAcme.Request do
 
   ## Returns
 
-    - `%ExAcme.Request{}`: A request struct with the looked-up URL and specified body.
-
-  ## Examples
-
-      iex> ExAcme.Request.build_named("newOrder", %{data: "value"}, client)
-      %ExAcme.Request{
-        url: "https://api.example.com/new-order",
-        body: %{data: "value"}
-      }
+    - A request struct with the looked-up URL and specified body.
   """
   @spec build_named(String.t(), body(), ExAcme.client()) :: t()
   def build_named(name, body, client) do
@@ -92,7 +84,7 @@ defmodule ExAcme.Request do
 
   ## Returns
 
-    - `String.t()`: The URL associated with the given name.
+    - The URL associated with the given name in the directory.
   """
   @spec lookup_named_url(String.t(), ExAcme.client()) :: String.t()
   def lookup_named_url(name, client) do

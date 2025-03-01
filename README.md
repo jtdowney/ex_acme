@@ -50,20 +50,20 @@ children = [
 To register a new account with the ACME server, you need to generate an account key, create a registration, and agree to the terms of service.
 
 ```elixir
-alias ExAcme.{AccountKey, Registration}
+alias ExAcme.RegistrationBuilder
 
 # Generate a new account key
-account_key = AccountKey.generate()
+key = ExAcme.generate_key()
 
 # Create and configure the registration
 registration =
-  Registration.new()
-  |> Registration.contacts(["mailto:admin@example.com"])
-  |> Registration.agree_to_terms()
+  RegistrationBuilder.new_registration()
+  |> RegistrationBuilder.contacts(["mailto:admin@example.com"])
+  |> RegistrationBuilder.agree_to_terms()
 
 # Register the account
-case Registration.register(registration, account_key, MyAcme) do
-  {:ok, account} ->
+case ExAcme.register_account(registration, key, MyAcme) do
+  {:ok, account, account_key} ->
     IO.puts("Account registered successfully!")
     IO.inspect(account)
 
@@ -73,21 +73,24 @@ case Registration.register(registration, account_key, MyAcme) do
 end
 ```
 
+> [!IMPORTANT]
+> From now on you can use the `account_key` to perform operations on the account. This structure holds the JSON Web Key (JWK) associated with the account and the Key ID (kid) assigned by the ACME server.
+
 ### Creating an order request
 
 Once you have registered an account, you can create an order for a certificate by specifying the domain(s) you wish to obtain certificates for.
 
 ```elixir
-alias ExAcme.OrderRequest
+alias ExAcme.OrderBuilder
 
 # Create a new order request
 order_request =
-  OrderRequest.new()
-  |> OrderRequest.add_dns_identifier("example.com")
-  |> OrderRequest.add_dns_identifier("www.example.com")
+  OrderBuilder.new_order()
+  |> OrderBuilder.add_dns_identifier("example.com")
+  |> OrderBuilder.add_dns_identifier("www.example.com")
 
 # Submit the order
-case OrderRequest.submit(order_request, account_key, MyAcme) do
+case ExAcme.submit_order(order_request, account_key, MyAcme) do
   {:ok, order} ->
     IO.puts("Order created successfully!")
     IO.inspect(order)
@@ -103,10 +106,10 @@ end
 After creating an order, you need to complete the necessary challenges to prove ownership of the domain.
 
 ```elixir
-alias ExAcme.{Authorization, Challenge}
+alias ExAcme.Challenge
 
 for auth_url <- order.authorizations do
-  {:ok, authorization} = Authorization.fetch(auth_url, account_key, MyAcme)
+  {:ok, authorization} = ExAcme.fetch_authorization(auth_url, account_key, MyAcme)
   challenge = Challenge.find_by_type(authorization, "dns-01")
 
   if challenge do
@@ -115,11 +118,11 @@ for auth_url <- order.authorizations do
     setup_challenge(authorization.identifier["value"], value)
 
     # Trigger validation
-    {:ok, _validated_challenge} = Challenge.trigger_validation(challenge.url, account_key, MyAcme)
+    {:ok, _validated_challenge} = ExAcme.start_challenge_validation(challenge.url, account_key, MyAcme)
 
     # Optionally, wait and verify the challenge status
     :timer.sleep(5000)
-    {:ok, validated_challenge} = Challenge.fetch(challenge.url, account_key, MyAcme)
+    {:ok, validated_challenge} = ExAcme.fetch_challenge(challenge.url, account_key, MyAcme)
 
     if validated_challenge.status == "valid" do
       IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
@@ -137,16 +140,16 @@ end
 After all challenges are validated, you can finalize the order by submitting a CSR.
 
 ```elixir
-alias ExAcme.{Order, Certificate}
+alias ExAcme.Order
 
 # Create a private key for the certificate
 private_key = X509.PrivateKey.new_ec(:secp256r1)
 
 # Generate CSR from the order and private key
-csr = Certificate.csr_from_order(order, private_key)
+csr = Order.to_csr(order, private_key)
 
 # Finalize the order by submitting the CSR
-case Order.finalize(order.finalize_url, csr, account_key, MyAcme) do
+case ExAcme.finalize_order(order.finalize_url, csr, account_key, MyAcme) do
   {:ok, finalized_order} ->
     IO.puts("Order finalized successfully!")
     IO.inspect(finalized_order)
@@ -162,9 +165,7 @@ end
 Once the order is finalized and the certificate is issued, you can fetch the certificate from the ACME server.
 
 ```elixir
-alias ExAcme.Certificate
-
-case Certificate.fetch(finalized_order.certificate_url, account_key, MyAcme) do
+case ExAcme.fetch_certificates(finalized_order.certificate_url, account_key, MyAcme) do
   {:ok, certificates} ->
     Enum.each(certificates, fn cert ->
       IO.puts("Fetched Certificate:")

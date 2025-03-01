@@ -2,41 +2,44 @@ defmodule ExAcme.TestHelpers do
   @moduledoc false
   use AssertEventually
 
-  def create_account(account_key, client) do
-    {:ok, %{url: kid} = account} =
-      ExAcme.Registration.new()
-      |> ExAcme.Registration.contacts("mailto:#{Faker.Internet.email()}")
-      |> ExAcme.Registration.agree_to_terms()
-      |> ExAcme.Registration.register(account_key, client)
+  def create_account(key, client) do
+    {:ok, account, account_key} =
+      ExAcme.register_account(
+        %{
+          contacts: ["mailto:#{Faker.Internet.email()}"],
+          terms_of_service_agreed: true
+        },
+        key,
+        client
+      )
 
-    account_key = ExAcme.AccountKey.update_kid(account_key, kid)
     {account_key, account}
   end
 
   def create_order(account_key, client) do
-    ExAcme.OrderRequest.new()
-    |> ExAcme.OrderRequest.add_dns_identifier(Faker.Internet.domain_name())
-    |> ExAcme.OrderRequest.submit(account_key, client)
+    ExAcme.OrderBuilder.new_order()
+    |> ExAcme.OrderBuilder.add_dns_identifier(Faker.Internet.domain_name())
+    |> ExAcme.submit_order(account_key, client)
   end
 
   def validate_order(order, account_key, client) do
     for url <- order.authorizations do
-      {:ok, authorization} = ExAcme.Authorization.fetch(url, account_key, client)
+      {:ok, authorization} = ExAcme.fetch_authorization(url, account_key, client)
       validate_authorization(authorization, account_key, client)
     end
 
     eventually {:ok, %{status: "ready"}} =
-                 ExAcme.Order.fetch(order.url, account_key, client)
+                 ExAcme.fetch_order(order.url, account_key, client)
   end
 
   def validate_authorization(authorization, account_key, client) do
     challenge = ExAcme.Challenge.find_by_type(authorization, "dns-01")
     %{"type" => "dns", "value" => domain_name} = authorization.identifier
     ExAcme.TestHelpers.set_dns_challenge(domain_name, challenge.token, account_key, client)
-    ExAcme.Challenge.trigger_validation(challenge.url, account_key, client)
+    ExAcme.start_challenge_validation(challenge.url, account_key, client)
 
     eventually {:ok, %{status: "valid"}} =
-                 ExAcme.Challenge.fetch(challenge.url, account_key, client)
+                 ExAcme.fetch_challenge(challenge.url, account_key, client)
 
     ExAcme.TestHelpers.clear_dns_challenge(domain_name, client)
   end
