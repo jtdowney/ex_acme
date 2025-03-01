@@ -21,7 +21,7 @@ defmodule ExAcme do
   @content_type "application/jose+json"
 
   @typedoc "Client process holding directory cache and state"
-  @type client() :: Agent.agent()
+  @type client() :: client()
 
   @doc ~S"""
   Generates a cryptographic key pair for use with ACME operations.
@@ -74,7 +74,7 @@ defmodule ExAcme do
 
     - `client` - The pid or name of the ExAcme client agent.
   """
-  @spec directory(Agent.agent()) :: map()
+  @spec directory(client()) :: map()
   def directory(client) do
     client
     |> Agent.get(& &1)
@@ -88,7 +88,7 @@ defmodule ExAcme do
 
     - `client` - The pid or name of the ExAcme client agent.
   """
-  @spec terms_of_service(Agent.agent()) :: String.t()
+  @spec terms_of_service(client()) :: String.t()
   def terms_of_service(client) do
     client
     |> directory()
@@ -102,7 +102,7 @@ defmodule ExAcme do
 
     - `client` - The pid or name of the ExAcme client agent.
   """
-  @spec profiles(Agent.agent()) :: [map()]
+  @spec profiles(client()) :: [map()]
   def profiles(client) do
     client
     |> directory()
@@ -116,7 +116,7 @@ defmodule ExAcme do
 
     - `client` - The pid or name of the ExAcme client agent.
   """
-  @spec external_account_required?(Agent.agent()) :: boolean()
+  @spec external_account_required?(client()) :: boolean()
   def external_account_required?(client) do
     client
     |> directory()
@@ -162,7 +162,7 @@ defmodule ExAcme do
     - `{:ok, account}` - If the account is successfully fetched.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_account(String.t(), ExAcme.AccountKey.t(), Agent.agent()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
+  @spec fetch_account(String.t(), ExAcme.AccountKey.t(), client()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
   def fetch_account(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Account.from_response/2)
   end
@@ -181,7 +181,7 @@ defmodule ExAcme do
     - `{:ok, authorization}` - If the authorization is successfully fetched.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_authorization(String.t(), ExAcme.AccountKey.t(), Agent.agent()) ::
+  @spec fetch_authorization(String.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Authorization.t()} | {:error, any()}
   def fetch_authorization(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Authorization.from_response/2)
@@ -201,7 +201,7 @@ defmodule ExAcme do
     - `{:ok, certificate_chain}` - If the certificate chain is successfully fetched.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), Agent.agent()) ::
+  @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, [X509.Certificate.t()]} | {:error, any()}
   def fetch_certificates(url, account_key, client) do
     request = ExAcme.Request.build_fetch(url)
@@ -225,7 +225,7 @@ defmodule ExAcme do
     - `{:ok, challenge}` - If the challenge is successfully fetched.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_challenge(String.t(), ExAcme.AccountKey.t(), Agent.agent()) ::
+  @spec fetch_challenge(String.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Challenge.t()} | {:error, any()}
   def fetch_challenge(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Challenge.from_response/2)
@@ -245,7 +245,7 @@ defmodule ExAcme do
     - `{:ok, order}` - If the order is successfully fetched.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_order(String.t(), ExAcme.AccountKey.t(), Agent.agent()) ::
+  @spec fetch_order(String.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Order.t()} | {:error, any()}
   def fetch_order(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Order.from_response/2)
@@ -267,7 +267,7 @@ defmodule ExAcme do
     - `{:ok, order}` - If the order is successfully finalized.
     - `{:error, reason}` - If an error occurs during the finalization process.
   """
-  @spec finalize_order(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), Agent.agent()) ::
+  @spec finalize_order(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Order.t()} | {:error, any()}
   def finalize_order(finalize_url, csr, account_key, client) do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
@@ -298,7 +298,7 @@ defmodule ExAcme do
       (JWK) and the Key Identifier (kid) returned by the server.
     - `{:error, reason}` - If an error occurs during registration.
   """
-  @spec register_account(ExAcme.RegistrationBuilder.t() | map(), JOSE.JWK.t(), Agent.agent(), keyword()) ::
+  @spec register_account(ExAcme.RegistrationBuilder.t() | map(), JOSE.JWK.t(), client(), keyword()) ::
           {:ok, ExAcme.Account.t(), ExAcme.AccountKey.t()} | {:error, any()}
   def register_account(registration_builder, key, client, opts \\ [])
 
