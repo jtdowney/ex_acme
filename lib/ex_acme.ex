@@ -124,6 +124,31 @@ defmodule ExAcme do
   end
 
   @doc """
+  Deactivates an existing ACME account.
+
+  This function sends a request to the ACME server to change the status of an account to 'deactivated'.
+  Once an account is deactivated, it cannot be used for any further operations and the change is irreversible.
+
+  ## Parameters
+
+    - `account_key` - The account key used for authentication, containing the Key ID (kid).
+    - `client` - The pid or name of the ExAcme client agent.
+
+  ## Returns
+
+    - `{:ok, account}` - If the account is successfully deactivated, returns the updated account information.
+    - `{:error, reason}` - If an error occurs during the deactivation process.
+  """
+  @spec deactivate_account(ExAcme.AccountKey.t(), client()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
+  def deactivate_account(%ExAcme.AccountKey{kid: kid} = account_key, client) do
+    request = ExAcme.Request.build_update(kid, %{status: "deactivated"})
+
+    with {:ok, response} <- send_request(request, account_key, client) do
+      {:ok, ExAcme.Account.from_response(kid, response.body)}
+    end
+  end
+
+  @doc """
   Fetches account information from the specified URL.
 
   ## Parameters

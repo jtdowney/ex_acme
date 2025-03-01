@@ -10,6 +10,15 @@ defmodule ExAcme.AccountTest do
     assert fetched_account == account
   end
 
+  test "deactivate account", %{client: client} do
+    account_key = ExAcme.generate_key()
+
+    {account_key, _} = ExAcme.TestHelpers.create_account(account_key, client)
+    {:ok, account} = ExAcme.deactivate_account(account_key, client)
+
+    assert account.status == "deactivated"
+  end
+
   test "fetch non-existing account", %{client: client} do
     url =
       client
