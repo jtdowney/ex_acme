@@ -7,12 +7,6 @@ ExAcme is a lightweight, developer-friendly Elixir library for interacting with 
 - Designed with developer productivity and Elixir idioms in mind.
 - Easy integration into your projects with minimal configuration.
 
-## Unreleased
-
-- [Account key change](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5)
-- [Account deactivation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.6)
-- [Certificate revocation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.6)
-
 ## Missing
 
 - [Handling external account binding](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
@@ -25,7 +19,7 @@ The package can be installed by adding `ex_acme` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:ex_acme, "~> 0.2.0"}
+    {:ex_acme, "~> 0.3.0"}
   ]
 end
 ```
