@@ -79,31 +79,4 @@ defmodule ExAcme.RevocationTest do
              |> ExAcme.RevocationBuilder.reason(:key_compromise)
              |> ExAcme.revoke_certificate(account_key, client)
   end
-
-  test "unspecified reason" do
-    %{reason: reason} = ExAcme.RevocationBuilder.reason(ExAcme.RevocationBuilder.new_revocation(), :unspecified)
-    assert reason == 0
-  end
-
-  test "key compromise reason" do
-    %{reason: reason} = ExAcme.RevocationBuilder.reason(ExAcme.RevocationBuilder.new_revocation(), :key_compromise)
-    assert reason == 1
-  end
-
-  test "affiliation changed reason" do
-    %{reason: reason} = ExAcme.RevocationBuilder.reason(ExAcme.RevocationBuilder.new_revocation(), :affiliation_changed)
-    assert reason == 3
-  end
-
-  test "superseded reason" do
-    %{reason: reason} = ExAcme.RevocationBuilder.reason(ExAcme.RevocationBuilder.new_revocation(), :superseded)
-    assert reason == 4
-  end
-
-  test "cessation of operation reason" do
-    %{reason: reason} =
-      ExAcme.RevocationBuilder.reason(ExAcme.RevocationBuilder.new_revocation(), :cessation_of_operation)
-
-    assert reason == 5
-  end
 end

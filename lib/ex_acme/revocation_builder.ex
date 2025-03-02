@@ -99,15 +99,11 @@ defmodule ExAcme.RevocationBuilder do
 
     - An updated `ExAcme.RevocationBuilder` struct with the reason set.
   """
-  @spec reason(
-          t(),
-          :unspecified | :key_compromise | :affiliation_changed | :superseded | :cessation_of_operation | integer()
-        ) :: t()
-  def reason(revocation, :unspecified), do: reason(revocation, 0)
-  def reason(revocation, :key_compromise), do: reason(revocation, 1)
-  def reason(revocation, :affiliation_changed), do: reason(revocation, 3)
-  def reason(revocation, :superseded), do: reason(revocation, 4)
-  def reason(revocation, :cessation_of_operation), do: reason(revocation, 5)
+  @spec reason(t(), atom() | integer()) :: t()
+  def reason(revocation, reason) when is_atom(reason) do
+    code = :ex_acme |> Application.get_env(:reason_codes) |> Map.fetch!(reason)
+    reason(revocation, code)
+  end
 
   def reason(revocation, reason) do
     %{revocation | reason: reason}
