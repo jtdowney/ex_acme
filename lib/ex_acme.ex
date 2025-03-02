@@ -18,8 +18,6 @@ defmodule ExAcme do
 
   use Agent
 
-  @content_type "application/jose+json"
-
   @typedoc "Client process holding directory cache and state"
   @type client() :: client()
 
@@ -60,13 +58,46 @@ defmodule ExAcme do
     directory_url = Keyword.fetch!(options, :directory_url)
     finch = Keyword.fetch!(options, :finch)
 
-    with {:ok, directory} <- fetch_directory(directory_url, finch),
-         {:ok, nonce} <- fetch_nonce(directory, finch) do
+    with {:ok, directory} <- fetch_directory(directory_url, finch) do
       Agent.start_link(
-        fn -> Enum.into(options, %{directory: directory, nonce: nonce}) end,
+        fn -> Enum.into(options, %{directory: directory}) end,
         options
       )
     end
+  end
+
+  @doc ~S"""
+  Refreshes and returns the current ACME nonce.
+
+  This function retrieves the current nonce from the client's state. If no nonce
+  is available, it automatically fetches a new one from the ACME server.
+
+  The nonce is a unique value provided by the ACME server that must be included
+  in each request to prevent replay attacks.
+
+  ## Parameters
+
+    - `client` - The pid or name of the ExAcme client agent.
+
+  ## Returns
+
+    - `{:ok, nonce}` - The current nonce value.
+    - `{:error, reason}` - If an error occurs during nonce retrieval.
+  """
+  @spec current_nonce(client()) :: {:ok, String.t()} | {:error, term()}
+  def current_nonce(client) do
+    Agent.get_and_update(client, fn state ->
+      case Map.pop(state, :nonce) do
+        {nil, state} ->
+          case fetch_nonce(state) do
+            {:ok, nonce} -> {nonce, state}
+            {:error, _} -> raise "Failed to fetch any nonce"
+          end
+
+        {nonce, state} ->
+          {nonce, state}
+      end
+    end)
   end
 
   @doc ~S"""
@@ -145,7 +176,7 @@ defmodule ExAcme do
   def deactivate_account(%ExAcme.AccountKey{kid: kid} = account_key, client) do
     request = ExAcme.Request.build_update(kid, %{status: "deactivated"})
 
-    with {:ok, response} <- send_request(request, account_key, client) do
+    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
       {:ok, ExAcme.Account.from_response(kid, response.body)}
     end
   end
@@ -208,7 +239,7 @@ defmodule ExAcme do
   def fetch_certificates(url, account_key, client) do
     request = ExAcme.Request.build_fetch(url)
 
-    with {:ok, response} <- send_request(request, account_key, client) do
+    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
       {:ok, X509.from_pem(response.body)}
     end
   end
@@ -275,7 +306,7 @@ defmodule ExAcme do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
     request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
 
-    with {:ok, response} <- send_request(request, account_key, client) do
+    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
       {:ok, ExAcme.Order.from_response(finalize_url, response.body)}
     end
   end
@@ -319,7 +350,7 @@ defmodule ExAcme do
     request = ExAcme.Request.build_named("newAccount", body, client)
 
     with {:ok, %{body: body, headers: headers}} <-
-           send_request(request, key, client) do
+           ExAcme.Request.send_request(request, key, client) do
       location = Map.get(headers, "location")
       %{url: kid} = account = ExAcme.Account.from_response(location, body)
       account_key = ExAcme.AccountKey.new(key, kid)
@@ -363,7 +394,7 @@ defmodule ExAcme do
 
     request = ExAcme.Request.build_named("revokeCert", body, client)
 
-    with {:ok, _} <- send_request(request, account_key, client) do
+    with {:ok, _} <- ExAcme.Request.send_request(request, account_key, client) do
       :ok
     end
   end
@@ -398,7 +429,7 @@ defmodule ExAcme do
     with {:ok, inner_payload} <- Jason.encode(inner_payload),
          outer_payload = inner_payload |> JOSE.JWK.sign(inner_headers, new_key) |> elem(1),
          request = ExAcme.Request.build_update(url, outer_payload),
-         {:ok, _response} <- send_request(request, old_account_key, client) do
+         {:ok, _response} <- ExAcme.Request.send_request(request, old_account_key, client) do
       new_account_key = ExAcme.AccountKey.new(new_key, kid)
       {:ok, new_account_key}
     end
@@ -428,7 +459,7 @@ defmodule ExAcme do
   def start_challenge_validation(url, account_key, client) do
     request = ExAcme.Request.build_update(url, %{})
 
-    with {:ok, %{body: body}} <- send_request(request, account_key, client) do
+    with {:ok, %{body: body}} <- ExAcme.Request.send_request(request, account_key, client) do
       {:ok, ExAcme.Challenge.from_response(url, body)}
     end
   end
@@ -465,88 +496,19 @@ defmodule ExAcme do
     request = ExAcme.Request.build_named("newOrder", body, client)
 
     with {:ok, %{body: body, headers: headers}} <-
-           send_request(request, account_key, client) do
+           ExAcme.Request.send_request(request, account_key, client) do
       location = Map.get(headers, "location")
       order = ExAcme.Order.from_response(location, body)
       {:ok, order}
     end
   end
 
-  defp decode_body(body, headers) do
-    content_type =
-      headers
-      |> List.keyfind("content-type", 0, {"content-type", "text/plain"})
-      |> elem(1)
-      |> String.split("; ")
-      |> List.first()
-
-    case content_type do
-      "application/json" -> Jason.decode!(body)
-      "application/problem+json" -> Jason.decode!(body)
-      _ -> body
-    end
-  end
-
   defp fetch_object(url, account_key, client, object_builder) do
     request = ExAcme.Request.build_fetch(url)
 
-    with {:ok, response} <- send_request(request, account_key, client) do
+    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
       {:ok, object_builder.(url, response.body)}
     end
-  end
-
-  defp send_request(request, key, client) do
-    %{finch: finch} = Agent.get(client, & &1)
-    body = sign_request(request.url, request.body, key, client)
-    user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
-    headers = [{"Content-Type", @content_type}, {"User-Agent", user_agent}]
-
-    with {:ok, body} <- Jason.encode(body),
-         finch_request = Finch.build(:post, request.url, headers, body),
-         {:ok, %Finch.Response{status: status, body: body, headers: headers}} <-
-           Finch.request(finch_request, finch) do
-      refresh_nonce(client, headers)
-      body = decode_body(body, headers)
-
-      case {status, body} do
-        {400, %{"type" => "urn:ietf:params:acme:error:badNonce"}} ->
-          send_request(request, key, client)
-
-        {status, body} when status >= 400 ->
-          body =
-            if body == "" do
-              {:http_error, status}
-            else
-              body
-            end
-
-          {:error, body}
-
-        {_, body} ->
-          {:ok, %{body: body, headers: Map.new(headers)}}
-      end
-    end
-  end
-
-  defp sign_request(url, body, key, client) do
-    %{nonce: nonce} = Agent.get(client, & &1)
-    headers = %{"nonce" => nonce, "url" => url}
-    sign(key, body, headers)
-  end
-
-  defp sign(key, body, header) when is_map(body) do
-    sign(key, Jason.encode!(body), header)
-  end
-
-  defp sign(%ExAcme.AccountKey{} = key, body, header) do
-    ExAcme.AccountKey.sign(key, body, header)
-  end
-
-  defp sign(%JOSE.JWK{} = key, body, header) do
-    jwk = key |> JOSE.JWK.to_public_map() |> elem(1)
-    algorithm = jwk |> JOSE.JWK.to_map() |> elem(1) |> Map.fetch!("alg")
-    header = Map.merge(header, %{"alg" => algorithm, "jwk" => jwk})
-    body |> JOSE.JWK.sign(header, key) |> elem(1)
   end
 
   defp fetch_directory(directory_url, finch) do
@@ -556,32 +518,13 @@ defmodule ExAcme do
     end
   end
 
-  defp fetch_nonce(%{"newNonce" => nonce_url}, finch) do
-    with {:ok, %Finch.Response{headers: headers}} <-
-           :head |> Finch.build(nonce_url) |> Finch.request(finch) do
-      nonce = headers |> List.keyfind("replay-nonce", 0) |> elem(1)
-      {:ok, nonce}
-    end
-  end
-
-  defp update_nonce(client, nonce) do
-    Agent.update(client, fn state -> Map.put(state, :nonce, nonce) end)
-  end
-
-  defp refresh_nonce(client, headers) do
-    state = Agent.get(client, & &1)
-
-    new_nonce =
+  defp fetch_nonce(%{finch: finch, directory: %{"newNonce" => url}}) do
+    with {:ok, %{headers: headers}} <- :head |> Finch.build(url) |> Finch.request(finch) do
       case List.keyfind(headers, "replay-nonce", 0) do
-        {_, nonce} ->
-          nonce
-
-        nil ->
-          {:ok, nonce} = fetch_nonce(state.directory, state.finch)
-          nonce
+        {_, nonce} -> {:ok, nonce}
+        _ -> raise "Unable to fetch a fresh nonce"
       end
-
-    update_nonce(client, new_nonce)
+    end
   end
 
   defp expand_directory(:lets_encrypt), do: "https://acme-v02.api.letsencrypt.org/directory"

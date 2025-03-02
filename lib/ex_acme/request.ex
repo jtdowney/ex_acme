@@ -5,6 +5,8 @@ defmodule ExAcme.Request do
 
   defstruct [:url, :body]
 
+  @content_type "application/jose+json"
+
   @typedoc "The type of the request body."
   @type body :: String.t() | map()
 
@@ -90,5 +92,107 @@ defmodule ExAcme.Request do
   def lookup_named_url(name, client) do
     %{directory: directory} = Agent.get(client, & &1)
     Map.fetch!(directory, name)
+  end
+
+  @doc """
+  Sends an HTTP request to the ACME API.
+
+  This function handles the actual HTTP communication with the ACME server,
+  including signing the request with the provided key, handling nonce refreshes,
+  and processing the response.
+
+  ## Parameters
+
+    - `request`: The request struct containing URL and body.
+    - `key` - The key used for authentication, it can either be an
+      `ExAcme.AccountKey` or a `JOSE.JWK` depending on if the account is
+      registered or not.
+    - `client` - The pid or name of the ExAcme client agent.
+
+  ## Returns
+
+    - `{:ok, %{body: map(), headers: map()}}` - On successful request.
+    - `{:error, term()}` - On failure, with details about the error.
+  """
+  @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
+          {:ok, %{body: map(), headers: map()}} | {:error, term()}
+  def send_request(request, key, client) do
+    %{finch: finch} = Agent.get(client, & &1)
+    body = sign_request(request.url, request.body, key, client)
+
+    with {:ok, finch_request} <- build_finch_request(request.url, body),
+         {:ok, %{status: status, body: body, headers: headers}} <- Finch.request(finch_request, finch) do
+      maybe_refresh_nonce(client, headers)
+      body = decode_body(body, headers)
+
+      case {status, body} do
+        {400, %{"type" => "urn:ietf:params:acme:error:badNonce"}} ->
+          send_request(request, key, client)
+
+        {status, body} when status >= 400 ->
+          body =
+            if body == "" do
+              {:http_error, status}
+            else
+              body
+            end
+
+          {:error, body}
+
+        {_, body} ->
+          {:ok, %{body: body, headers: Map.new(headers)}}
+      end
+    end
+  end
+
+  defp maybe_refresh_nonce(client, headers) do
+    case List.keyfind(headers, "replay-nonce", 0) do
+      {_, nonce} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
+    end
+  end
+
+  defp sign_request(url, body, key, client) do
+    nonce = ExAcme.current_nonce(client)
+    headers = %{"nonce" => nonce, "url" => url}
+    sign(key, body, headers)
+  end
+
+  defp sign(key, body, header) when is_map(body) do
+    sign(key, Jason.encode!(body), header)
+  end
+
+  defp sign(%ExAcme.AccountKey{} = key, body, header) do
+    ExAcme.AccountKey.sign(key, body, header)
+  end
+
+  defp sign(%JOSE.JWK{} = key, body, header) do
+    jwk = key |> JOSE.JWK.to_public_map() |> elem(1)
+    algorithm = jwk |> JOSE.JWK.to_map() |> elem(1) |> Map.fetch!("alg")
+    header = Map.merge(header, %{"alg" => algorithm, "jwk" => jwk})
+    body |> JOSE.JWK.sign(header, key) |> elem(1)
+  end
+
+  defp decode_body(body, headers) do
+    content_type =
+      headers
+      |> List.keyfind("content-type", 0, {"content-type", "text/plain"})
+      |> elem(1)
+      |> String.split("; ")
+      |> List.first()
+
+    case content_type do
+      "application/json" -> Jason.decode!(body)
+      "application/problem+json" -> Jason.decode!(body)
+      _ -> body
+    end
+  end
+
+  defp build_finch_request(url, body) do
+    user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
+    headers = [{"Content-Type", @content_type}, {"User-Agent", user_agent}]
+
+    with {:ok, body} <- Jason.encode(body) do
+      {:ok, Finch.build(:post, url, headers, body)}
+    end
   end
 end
