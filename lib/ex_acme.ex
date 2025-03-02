@@ -527,8 +527,9 @@ defmodule ExAcme do
     end
   end
 
-  defp expand_directory(:lets_encrypt), do: "https://acme-v02.api.letsencrypt.org/directory"
-  defp expand_directory(:lets_encrypt_staging), do: "https://acme-staging-v02.api.letsencrypt.org/directory"
-  defp expand_directory(:zerossl), do: "https://acme.zerossl.com/v2/DV90"
+  defp expand_directory(directory_url) when is_atom(directory_url) do
+    :ex_acme |> Application.fetch_env!(:named_directory_urls) |> Map.get(directory_url)
+  end
+
   defp expand_directory(directory_url), do: directory_url
 end
