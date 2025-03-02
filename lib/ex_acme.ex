@@ -49,13 +49,15 @@ defmodule ExAcme do
 
     - `:directory_url` - The URL of the ACME directory. The value can be
       `:lets_encrypt` or `:lets_encrypt_staging` to use the Let's Encrypt
-      production or staging directory URL or a custom directory URL.
+      production or staging directory URL, `:zerossl` to use ZeroSSL
+      directory URL, or a custom directory URL.
     - `:finch` - The module name or pid of the Finch HTTP client to use.
     - Other options to pass to `Agent` like `:name`.
   """
   @spec start_link(Keyword.t()) :: client()
   def start_link(options) do
-    directory_url = expand_directory(Keyword.fetch!(options, :directory_url))
+    options = Keyword.update!(options, :directory_url, &expand_directory/1)
+    directory_url = Keyword.fetch!(options, :directory_url)
     finch = Keyword.fetch!(options, :finch)
 
     with {:ok, directory} <- fetch_directory(directory_url, finch),
@@ -584,5 +586,6 @@ defmodule ExAcme do
 
   defp expand_directory(:lets_encrypt), do: "https://acme-v02.api.letsencrypt.org/directory"
   defp expand_directory(:lets_encrypt_staging), do: "https://acme-staging-v02.api.letsencrypt.org/directory"
+  defp expand_directory(:zerossl), do: "https://acme.zerossl.com/v2/DV90"
   defp expand_directory(directory_url), do: directory_url
 end

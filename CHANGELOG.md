@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added support for handling external account binding (https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
+- Added ZeroSSL as a named directory URL.
 
 ## 0.3.0 (2025-03-01)
 
