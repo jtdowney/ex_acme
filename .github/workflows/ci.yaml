@@ -8,6 +8,15 @@ on:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        versions:
+          [
+            { elixir: "1.15.8", otp: "25.3.2.18" },
+            { elixir: "1.16.3", otp: "25.3.2.18" },
+            { elixir: "1.17.3", otp: "26.2.5.9" },
+            { elixir: "1.18.2", otp: "27.2.4" },
+          ]
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +42,9 @@ jobs:
           push: false
           load: true
           tags: ex_acme:latest
+          build-args: |
+            ELIXIR_VERSION=${{ matrix.versions.elixir }}
+            OTP_VERSION=${{ matrix.versions.otp }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
