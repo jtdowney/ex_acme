@@ -11,11 +11,11 @@ ExAcme is a lightweight, developer-friendly Elixir library for interacting with 
 
 - [Account key change](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.5)
 - [Account deactivation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.6)
+- [Certificate revocation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.6)
 
 ## Missing
 
 - [Handling external account binding](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
-- [Certificate revocation](https://datatracker.ietf.org/doc/html/rfc8555#section-7.6)
 - [Renewal information extension (DRAFT)](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/)
 
 ## Installation

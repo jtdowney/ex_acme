@@ -44,6 +44,21 @@ defmodule ExAcme.TestHelpers do
     ExAcme.TestHelpers.clear_dns_challenge(domain_name, client)
   end
 
+  def issue_certificate(order, account_key, client) do
+    ExAcme.TestHelpers.validate_order(order, account_key, client)
+
+    private_key = X509.PrivateKey.new_ec(:secp256r1)
+    csr = ExAcme.Order.to_csr(order, private_key)
+
+    ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
+
+    eventually {:ok, %{status: "valid", certificate_url: certificate_url}} =
+                 ExAcme.fetch_order(order.url, account_key, client)
+
+    {:ok, certificates} = ExAcme.fetch_certificates(certificate_url, account_key, client)
+    {certificates, private_key}
+  end
+
   def set_dns_challenge(domain, token, account_key, client) do
     %{finch: finch} = Agent.get(client, & &1)
 

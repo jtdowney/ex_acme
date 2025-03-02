@@ -326,6 +326,47 @@ defmodule ExAcme do
   end
 
   @doc """
+  Revokes a previously issued certificate.
+
+  This function sends a request to the ACME server to revoke the specified certificate.
+  Once a certificate is revoked, it is no longer valid and cannot be reinstated.
+
+  ## Parameters
+
+    - `revocation_builder` - An `ExAcme.RevocationBuilder` struct or a map containing revocation details
+      such as the certificate data and optional reason code.
+    - `account_key` - The account key used for authentication.
+    - `client` - The pid or name of the ExAcme client agent.
+
+  ## Returns
+
+    - `:ok` - If the certificate is successfully revoked.
+    - `{:error, reason}` - If an error occurs during the revocation process.
+  """
+  @spec revoke_certificate(ExAcme.RevocationBuilder.t() | map(), ExAcme.AccountKey.t(), ExAcme.client()) ::
+          :ok | {:error, any()}
+  def revoke_certificate(%ExAcme.RevocationBuilder{} = revocation_builder, account_key, client) do
+    revocation_builder
+    |> ExAcme.RevocationBuilder.to_map()
+    |> revoke_certificate(account_key, client)
+  end
+
+  def revoke_certificate(%{certificate: cert_data} = body, account_key, client) do
+    certificate = Base.url_encode64(cert_data, padding: false)
+
+    body =
+      body
+      |> ExAcme.Utils.to_camel_case()
+      |> Map.put(:certificate, certificate)
+
+    request = ExAcme.Request.build_named("revokeCert", body, client)
+
+    with {:ok, _} <- send_request(request, account_key, client) do
+      :ok
+    end
+  end
+
+  @doc """
   Rotates the account key for an ACME account.
 
   This function replaces the current account key with a new one. The server will authorize the key
