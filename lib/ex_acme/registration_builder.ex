@@ -19,7 +19,7 @@ defmodule ExAcme.RegistrationBuilder do
           contact: [String.t()],
           terms_of_service_agreed: boolean(),
           only_return_existing: boolean(),
-          external_account_binding: String.t() | nil
+          external_account_binding: map() | nil
         }
 
   @doc """
@@ -65,6 +65,41 @@ defmodule ExAcme.RegistrationBuilder do
   @spec agree_to_terms(t()) :: t()
   def agree_to_terms(registration) do
     %__MODULE__{registration | terms_of_service_agreed: true}
+  end
+
+  @doc """
+  Configures the external account binding for the registration.
+
+  This function sets up an external account binding using the provided key, client,
+  external account binding key ID, and MAC key.
+
+  ## Parameters
+
+    - `registration` - The current registration struct.
+    - `key` - The `JOSE.JWK` key being registered.
+    - `client` - The ExAcme client name or pid.
+    - `eab_kid` - The external account binding key ID.
+    - `eab_mac_key` - The external account binding MAC key. This must be a valid base64url-encoded
+       string.
+
+  ## Returns
+
+    - Updated `ExAcme.RegistrationBuilder` struct with external account binding.
+  """
+  @spec external_account_binding(t(), JOSE.JWK.t(), ExAcme.client(), String.t(), String.t()) :: t()
+  def external_account_binding(registration, key, client, eab_kid, eab_mac_key) do
+    url = ExAcme.Request.lookup_named_url("newAccount", client)
+
+    header = %{
+      "alg" => "HS256",
+      "kid" => eab_kid,
+      "url" => url
+    }
+
+    payload = key |> JOSE.JWK.to_public_map() |> elem(1) |> Jason.encode!()
+    mac_key = eab_mac_key |> Base.url_decode64!(padding: false) |> JOSE.JWK.from_oct()
+    signature = mac_key |> JOSE.JWS.sign(payload, header) |> elem(1)
+    %__MODULE__{registration | external_account_binding: signature}
   end
 
   @doc """

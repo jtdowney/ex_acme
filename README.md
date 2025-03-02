@@ -9,7 +9,6 @@ ExAcme is a lightweight, developer-friendly Elixir library for interacting with 
 
 ## Missing
 
-- [Handling external account binding](https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
 - [Renewal information extension (DRAFT)](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/)
 - Exposing `Retry-After` header information.
 

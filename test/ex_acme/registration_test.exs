@@ -46,7 +46,7 @@ defmodule ExAcme.RegistrationTest do
     assert body["type"] == "urn:ietf:params:acme:error:agreementRequired"
   end
 
-  test "only_return_existing with no existing account", %{client: client} do
+  test "only return existing with no existing account", %{client: client} do
     key = ExAcme.generate_key()
 
     {:error, body} =
@@ -61,7 +61,7 @@ defmodule ExAcme.RegistrationTest do
     assert body["type"] == "urn:ietf:params:acme:error:accountDoesNotExist"
   end
 
-  test "only_return_existing with existing account", %{client: client} do
+  test "only return existing with existing account", %{client: client} do
     key = ExAcme.generate_key()
 
     {:ok, account1, account_key1} =
@@ -74,5 +74,34 @@ defmodule ExAcme.RegistrationTest do
 
     assert account1 == account2
     assert account_key1 == account_key2
+  end
+
+  test "external account binding", %{client: client} do
+    key = %{
+      "alg" => "ES256",
+      "crv" => "P-256",
+      "d" => "hoRe_jV87Vqd5O0yqr6xFaERBIACzFXCJxXc8PzwKn4",
+      "kty" => "EC",
+      "use" => "sig",
+      "x" => "AMv5Ucpq9LN9ItxECdNWhF5_PAYFc4rzfldX2GFMfmY",
+      "y" => "dyArqcwTzAzmcffGotj-gfL6YmLvhOHPhOMbfxMi_0k"
+    }
+
+    eab_kid = "https://example.com/eab"
+    eab_key = "lz7ytuIS2Il_GRFGC2bMEM32qI5ejhke9eQCBlbJE7c"
+
+    %ExAcme.RegistrationBuilder{external_account_binding: eab} =
+      ExAcme.RegistrationBuilder.new_registration()
+      |> ExAcme.RegistrationBuilder.contacts("mailto:admin@example.com")
+      |> ExAcme.RegistrationBuilder.agree_to_terms()
+      |> ExAcme.RegistrationBuilder.external_account_binding(key, client, eab_kid, eab_key)
+
+    assert eab == %{
+             "payload" =>
+               "eyJhbGciOiJFUzI1NiIsImNydiI6IlAtMjU2Iiwia3R5IjoiRUMiLCJ1c2UiOiJzaWciLCJ4IjoiQU12NVVjcHE5TE45SXR4RUNkTldoRjVfUEFZRmM0cnpmbGRYMkdGTWZtWSIsInkiOiJkeUFycWN3VHpBem1jZmZHb3RqLWdmTDZZbUx2aE9IUGhPTWJmeE1pXzBrIn0",
+             "protected" =>
+               "eyJhbGciOiJIUzI1NiIsImtpZCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vZWFiIiwidXJsIjoiaHR0cHM6Ly9wZWJibGU6MTQwMDAvc2lnbi1tZS11cCJ9",
+             "signature" => "roQDAoexWcvEh6DwOFCV12yUnaA31FcTZmSNaJAWYtI"
+           }
   end
 end
