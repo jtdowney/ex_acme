@@ -7,6 +7,14 @@ defmodule ExAcme.RevocationBuilder do
   """
   defstruct [:certificate, :reason]
 
+  @reason_codes %{
+    unspecified: 0,
+    key_compromise: 1,
+    affiliation_changed: 3,
+    superseded: 4,
+    cessation_of_operation: 5
+  }
+
   @typedoc "A certificate revocation builder"
   @type t :: %__MODULE__{
           certificate: binary() | nil,
@@ -101,7 +109,7 @@ defmodule ExAcme.RevocationBuilder do
   """
   @spec reason(t(), atom() | integer()) :: t()
   def reason(revocation, reason) when is_atom(reason) do
-    code = :ex_acme |> Application.get_env(:reason_codes) |> Map.fetch!(reason)
+    code = Map.fetch!(@reason_codes, reason)
     reason(revocation, code)
   end
 

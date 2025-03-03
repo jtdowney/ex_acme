@@ -18,7 +18,14 @@ defmodule ExAcme do
 
   use Agent
 
+  @named_directory_urls %{
+    lets_encrypt: "https://acme-v02.api.letsencrypt.org/directory",
+    lets_encrypt_staging: "https://acme-staging-v02.api.letsencrypt.org/directory",
+    zerossl: "https://acme.zerossl.com/v2/DV90"
+  }
+
   @typedoc "Client process holding directory cache and state"
+
   @type client() :: client()
 
   @doc ~S"""
@@ -528,7 +535,7 @@ defmodule ExAcme do
   end
 
   defp expand_directory(directory_url) when is_atom(directory_url) do
-    :ex_acme |> Application.fetch_env!(:named_directory_urls) |> Map.get(directory_url)
+    Map.fetch!(@named_directory_urls, directory_url)
   end
 
   defp expand_directory(directory_url), do: directory_url

@@ -1,5 +1,9 @@
 # ExAcme Changelog
 
+## 0.4.1 (2025-03-02)
+
+- Fix mistake with config values
+
 ## 0.4.0 (2025-03-02)
 
 - Added support for handling external account binding (https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4)
