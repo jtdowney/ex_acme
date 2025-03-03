@@ -118,7 +118,7 @@ defmodule ExAcme.Request do
           {:ok, %{body: map(), headers: map()}} | {:error, term()}
   def send_request(request, key, client) do
     user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
-    headers = [content_type: @content_type, user_Agent: user_agent]
+    headers = [content_type: @content_type, user_agent: user_agent]
 
     with {:ok, nonce} <- ExAcme.current_nonce(client),
          body = sign_request(request.url, request.body, key, nonce),
