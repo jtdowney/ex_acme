@@ -94,9 +94,14 @@ defmodule ExAcme do
   @spec current_nonce(client()) :: {:ok, String.t()} | {:error, term()}
   def current_nonce(client) do
     Agent.get_and_update(client, fn state ->
-      Map.pop_lazy(state, :nonce, fn ->
-        fetch_nonce!(state)
-      end)
+      case Map.pop(state, :nonce) do
+        {nil, state} ->
+          result = fetch_nonce(state)
+          {result, state}
+
+        {nonce, state} ->
+          {{:ok, nonce}, state}
+      end
     end)
   end
 
@@ -515,13 +520,6 @@ defmodule ExAcme do
     with {:ok, %Finch.Response{body: body}} <-
            :get |> Finch.build(directory_url) |> Finch.request(finch) do
       Jason.decode(body)
-    end
-  end
-
-  defp fetch_nonce!(state) do
-    case fetch_nonce(state) do
-      {:ok, nonce} -> nonce
-      {:error, reason} -> raise "Unable to fetch a fresh nonce: #{inspect(reason)}"
     end
   end
 

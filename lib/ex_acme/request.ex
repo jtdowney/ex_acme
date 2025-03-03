@@ -118,9 +118,10 @@ defmodule ExAcme.Request do
           {:ok, %{body: map(), headers: map()}} | {:error, term()}
   def send_request(request, key, client) do
     %{finch: finch} = Agent.get(client, & &1)
-    body = sign_request(request.url, request.body, key, client)
 
-    with {:ok, finch_request} <- build_finch_request(request.url, body),
+    with {:ok, nonce} <- ExAcme.current_nonce(client),
+         body = sign_request(request.url, request.body, key, nonce),
+         {:ok, finch_request} <- build_finch_request(request.url, body),
          {:ok, %{status: status, body: body, headers: headers}} <- Finch.request(finch_request, finch) do
       maybe_refresh_nonce(client, headers)
       body = decode_body(body, headers)
@@ -152,8 +153,7 @@ defmodule ExAcme.Request do
     end
   end
 
-  defp sign_request(url, body, key, client) do
-    nonce = ExAcme.current_nonce(client)
+  defp sign_request(url, body, key, nonce) do
     headers = %{"nonce" => nonce, "url" => url}
     sign(key, body, headers)
   end
