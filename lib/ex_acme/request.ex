@@ -148,6 +148,7 @@ defmodule ExAcme.Request do
   defp maybe_refresh_nonce(client, headers) do
     case List.keyfind(headers, "replay-nonce", 0) do
       {_, nonce} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
+      _ -> client
     end
   end
 
