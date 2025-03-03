@@ -1,5 +1,10 @@
 # ExAcme
 
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_acme.svg)](https://hex.pm/packages/ex_acme)
+[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/ex_acme)
+[![License](https://img.shields.io/hexpm/l/ex_acme.svg)](https://github.com/jtdowney/ex_acme/blob/main/LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/jtdowney/ex_acme/ci.yaml?branch=main)](https://github.com/jtdowney/ex_acme/actions)
+
 ExAcme is a lightweight, developer-friendly Elixir library for interacting with [RFC 8555-compliant](https://tools.ietf.org/html/rfc8555) ACME servers like [Let's Encrypt](https://letsencrypt.org). It simplifies the process of managing X.509 (TLS/SSL) certificates by providing a straightforward API for registering accounts, handling domain challenges, and issuing certificates.
 
 ## Features
