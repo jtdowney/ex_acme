@@ -90,8 +90,9 @@ defmodule ExAcme.Request do
   """
   @spec lookup_named_url(String.t(), ExAcme.client()) :: String.t()
   def lookup_named_url(name, client) do
-    %{directory: directory} = Agent.get(client, & &1)
-    Map.fetch!(directory, name)
+    client
+    |> ExAcme.directory()
+    |> Map.fetch!(name)
   end
 
   @doc """
