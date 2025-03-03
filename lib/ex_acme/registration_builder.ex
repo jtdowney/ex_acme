@@ -121,6 +121,5 @@ defmodule ExAcme.RegistrationBuilder do
     registration
     |> Map.from_struct()
     |> Map.reject(fn {_, value} -> value == nil end)
-    |> ExAcme.Utils.to_camel_case()
   end
 end
