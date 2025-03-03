@@ -521,7 +521,7 @@ defmodule ExAcme do
   defp fetch_nonce!(state) do
     case fetch_nonce(state) do
       {:ok, nonce} -> nonce
-      {:error, reason} -> raise "Unable to fetch a fresh nonce: #{reason}"
+      {:error, reason} -> raise "Unable to fetch a fresh nonce: #{inspect(reason)}"
     end
   end
 
