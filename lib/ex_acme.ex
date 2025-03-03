@@ -56,16 +56,14 @@ defmodule ExAcme do
       `:lets_encrypt` or `:lets_encrypt_staging` to use the Let's Encrypt
       production or staging directory URL, `:zerossl` to use ZeroSSL
       directory URL, or a custom directory URL.
-    - `:finch` - The module name or pid of the Finch HTTP client to use.
     - Other options to pass to `Agent` like `:name`.
   """
   @spec start_link(Keyword.t()) :: client()
   def start_link(options) do
     options = Keyword.update!(options, :directory_url, &expand_directory/1)
     directory_url = Keyword.fetch!(options, :directory_url)
-    finch = Keyword.fetch!(options, :finch)
 
-    with {:ok, directory} <- fetch_directory(directory_url, finch) do
+    with {:ok, %{body: directory}} <- Req.get(directory_url) do
       Agent.start_link(
         fn -> Enum.into(options, %{directory: directory}) end,
         options
@@ -356,7 +354,7 @@ defmodule ExAcme do
 
     with {:ok, %{body: body, headers: headers}} <-
            ExAcme.Request.send_request(request, key, client) do
-      location = Map.get(headers, "location")
+      location = headers |> Map.get("location") |> List.first()
       %{url: kid} = account = ExAcme.Account.from_response(location, body)
       account_key = ExAcme.AccountKey.new(key, kid)
       {:ok, account, account_key}
@@ -502,7 +500,7 @@ defmodule ExAcme do
 
     with {:ok, %{body: body, headers: headers}} <-
            ExAcme.Request.send_request(request, account_key, client) do
-      location = Map.get(headers, "location")
+      location = headers |> Map.get("location") |> List.first()
       order = ExAcme.Order.from_response(location, body)
       {:ok, order}
     end
@@ -516,17 +514,10 @@ defmodule ExAcme do
     end
   end
 
-  defp fetch_directory(directory_url, finch) do
-    with {:ok, %Finch.Response{body: body}} <-
-           :get |> Finch.build(directory_url) |> Finch.request(finch) do
-      Jason.decode(body)
-    end
-  end
-
-  defp fetch_nonce(%{finch: finch, directory: %{"newNonce" => url}}) do
-    with {:ok, %{headers: headers}} <- :head |> Finch.build(url) |> Finch.request(finch) do
-      case List.keyfind(headers, "replay-nonce", 0) do
-        {_, nonce} -> {:ok, nonce}
+  defp fetch_nonce(%{directory: %{"newNonce" => url}}) do
+    with {:ok, %{headers: headers}} <- Req.head(url) do
+      case Map.get(headers, "replay-nonce") do
+        [nonce] -> {:ok, nonce}
         _ -> raise "Unable to fetch a fresh nonce"
       end
     end

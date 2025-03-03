@@ -35,13 +35,13 @@ defmodule ExAcme.TestHelpers do
   def validate_authorization(authorization, account_key, client) do
     challenge = ExAcme.Challenge.find_by_type(authorization, "dns-01")
     %{"type" => "dns", "value" => domain_name} = authorization.identifier
-    ExAcme.TestHelpers.set_dns_challenge(domain_name, challenge.token, account_key, client)
+    ExAcme.TestHelpers.set_dns_challenge(domain_name, challenge.token, account_key)
     ExAcme.start_challenge_validation(challenge.url, account_key, client)
 
     eventually {:ok, %{status: "valid"}} =
                  ExAcme.fetch_challenge(challenge.url, account_key, client)
 
-    ExAcme.TestHelpers.clear_dns_challenge(domain_name, client)
+    ExAcme.TestHelpers.clear_dns_challenge(domain_name)
   end
 
   def issue_certificate(order, account_key, client) do
@@ -59,9 +59,7 @@ defmodule ExAcme.TestHelpers do
     {certificates, private_key}
   end
 
-  def set_dns_challenge(domain, token, account_key, client) do
-    %{finch: finch} = Agent.get(client, & &1)
-
+  def set_dns_challenge(domain, token, account_key) do
     url =
       challenge_test_server_url()
       |> URI.parse()
@@ -70,28 +68,18 @@ defmodule ExAcme.TestHelpers do
     value =
       :sha256 |> :crypto.hash(ExAcme.Challenge.key_authorization(token, account_key)) |> Base.url_encode64(padding: false)
 
-    body = Jason.encode!(%{host: "_acme-challenge.#{domain}.", value: value})
-    headers = [{"Content-Type", "application/json"}]
-
-    :post
-    |> Finch.build(url, headers, body)
-    |> Finch.request(finch)
+    body = %{host: "_acme-challenge.#{domain}.", value: value}
+    Req.post(url, json: body)
   end
 
-  def clear_dns_challenge(domain, client) do
-    %{finch: finch} = Agent.get(client, & &1)
-
+  def clear_dns_challenge(domain) do
     url =
       challenge_test_server_url()
       |> URI.parse()
       |> URI.append_path("/clear-txt")
 
-    body = Jason.encode!(%{host: "_acme-challenge.#{domain}."})
-    headers = [{"Content-Type", "application/json"}]
-
-    :post
-    |> Finch.build(url, headers, body)
-    |> Finch.request(finch)
+    body = %{host: "_acme-challenge.#{domain}."}
+    Req.post(url, json: body)
   end
 
   defp challenge_test_server_url, do: System.get_env("CHALLTESTSRV_URL") || raise("CHALLTESTSRV_URL not set")

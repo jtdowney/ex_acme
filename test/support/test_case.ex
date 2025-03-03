@@ -10,7 +10,7 @@ defmodule ExAcme.TestCase do
         client =
           start_supervised!({
             ExAcme,
-            directory_url: directory_url(), finch: MyFinch
+            directory_url: directory_url()
           })
 
         %{client: client}

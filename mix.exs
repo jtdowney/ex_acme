@@ -56,10 +56,10 @@ defmodule ExAcme.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:faker, "~> 0.18.0", only: [:dev, :test]},
-      {:finch, "~> 0.19.0"},
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
       {:mix_test_watch, "~> 1.2", only: [:dev, :test], runtime: false},
+      {:req, "~> 0.5.8"},
       {:styler, "~> 1.3", only: [:dev, :test], runtime: false},
       {:x509, "~> 0.8.10"}
     ]

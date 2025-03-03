@@ -39,8 +39,7 @@ ExAcme needs a running Finch process to interact with the ACME server. You can a
 
 ```elixir
 children = [
-  {Finch, name: MyFinch},
-  {ExAcme, name: MyAcme, directory_url: :lets_encrypt_staging, finch: MyFinch}
+  {ExAcme, name: MyAcme, directory_url: :lets_encrypt_staging}
 ]
 ```
 

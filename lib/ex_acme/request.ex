@@ -117,14 +117,14 @@ defmodule ExAcme.Request do
   @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
           {:ok, %{body: map(), headers: map()}} | {:error, term()}
   def send_request(request, key, client) do
-    %{finch: finch} = Agent.get(client, & &1)
+    user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
+    headers = [content_type: @content_type, user_Agent: user_agent]
 
     with {:ok, nonce} <- ExAcme.current_nonce(client),
          body = sign_request(request.url, request.body, key, nonce),
-         {:ok, finch_request} <- build_finch_request(request.url, body),
-         {:ok, %{status: status, body: body, headers: headers}} <- Finch.request(finch_request, finch) do
+         {:ok, %{status: status, body: body, headers: headers}} <-
+           Req.post(request.url, json: body, headers: headers) do
       maybe_refresh_nonce(client, headers)
-      body = decode_body(body, headers)
 
       case {status, body} do
         {400, %{"type" => "urn:ietf:params:acme:error:badNonce"}} ->
@@ -147,8 +147,8 @@ defmodule ExAcme.Request do
   end
 
   defp maybe_refresh_nonce(client, headers) do
-    case List.keyfind(headers, "replay-nonce", 0) do
-      {_, nonce} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
+    case Map.fetch(headers, "replay-nonce") do
+      {:ok, [nonce]} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
       _ -> nil
     end
   end
@@ -171,29 +171,5 @@ defmodule ExAcme.Request do
     algorithm = jwk |> JOSE.JWK.to_map() |> elem(1) |> Map.fetch!("alg")
     header = Map.merge(header, %{"alg" => algorithm, "jwk" => jwk})
     body |> JOSE.JWK.sign(header, key) |> elem(1)
-  end
-
-  defp decode_body(body, headers) do
-    content_type =
-      headers
-      |> List.keyfind("content-type", 0, {"content-type", "text/plain"})
-      |> elem(1)
-      |> String.split("; ")
-      |> List.first()
-
-    case content_type do
-      "application/json" -> Jason.decode!(body)
-      "application/problem+json" -> Jason.decode!(body)
-      _ -> body
-    end
-  end
-
-  defp build_finch_request(url, body) do
-    user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
-    headers = [{"Content-Type", @content_type}, {"User-Agent", user_agent}]
-
-    with {:ok, body} <- Jason.encode(body) do
-      {:ok, Finch.build(:post, url, headers, body)}
-    end
   end
 end
