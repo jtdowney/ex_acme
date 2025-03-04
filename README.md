@@ -24,7 +24,7 @@ The package can be installed by adding `ex_acme` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:ex_acme, "~> 0.4.1"}
+    {:ex_acme, "~> 0.5.0"}
   ]
 end
 ```
@@ -35,7 +35,7 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 
 ### Starting the client
 
-ExAcme needs a running Finch process to interact with the ACME server. You can add ExAcme and Finch to your supervision tree.
+You can add ExAcme to your supervision tree.
 
 ```elixir
 children = [
