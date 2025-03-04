@@ -309,8 +309,9 @@ defmodule ExAcme do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
     request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
 
-    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
-      {:ok, ExAcme.Order.from_response(finalize_url, response.body)}
+    with {:ok, %{body: body, headers: headers}} <- ExAcme.Request.send_request(request, account_key, client) do
+      location = headers |> Map.get("location") |> List.first()
+      {:ok, ExAcme.Order.from_response(location, body)}
     end
   end
 
