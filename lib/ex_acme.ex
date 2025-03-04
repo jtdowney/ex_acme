@@ -519,7 +519,7 @@ defmodule ExAcme do
     with {:ok, %{headers: headers}} <- Req.head(url) do
       case Map.get(headers, "replay-nonce") do
         [nonce] -> {:ok, nonce}
-        _ -> raise "Unable to fetch a fresh nonce"
+        _ -> {:error, :unable_to_fetch_nonce}
       end
     end
   end
