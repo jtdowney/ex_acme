@@ -48,7 +48,7 @@ defmodule ExAcme.RegistrationBuilder do
   """
   @spec contacts(t(), [String.t()] | String.t()) :: t()
   def contacts(registration, contacts) do
-    %__MODULE__{registration | contact: List.wrap(contacts)}
+    %{registration | contact: List.wrap(contacts)}
   end
 
   @doc """
@@ -64,7 +64,7 @@ defmodule ExAcme.RegistrationBuilder do
   """
   @spec agree_to_terms(t()) :: t()
   def agree_to_terms(registration) do
-    %__MODULE__{registration | terms_of_service_agreed: true}
+    %{registration | terms_of_service_agreed: true}
   end
 
   @doc """
@@ -99,7 +99,7 @@ defmodule ExAcme.RegistrationBuilder do
     payload = key |> JOSE.JWK.to_public_map() |> elem(1) |> Jason.encode!()
     mac_key = eab_mac_key |> Base.url_decode64!(padding: false) |> JOSE.JWK.from_oct()
     signature = mac_key |> JOSE.JWS.sign(payload, header) |> elem(1)
-    %__MODULE__{registration | external_account_binding: signature}
+    %{registration | external_account_binding: signature}
   end
 
   @doc """

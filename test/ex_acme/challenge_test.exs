@@ -1,6 +1,6 @@
 defmodule ExAcme.ChallengeTest do
   use ExAcme.TestCase, async: true
-  use AssertEventually, timeout: :timer.seconds(10), interval: :timer.seconds(1)
+  use AssertEventually, timeout: to_timeout(second: 10), interval: to_timeout(second: 1)
 
   setup %{client: client} do
     key = ExAcme.generate_key()
