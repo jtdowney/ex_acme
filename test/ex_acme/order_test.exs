@@ -117,4 +117,19 @@ defmodule ExAcme.OrderTest do
 
     assert order.not_after == not_after
   end
+
+  test "creating an order for a wildcard", %{client: client, account_key: account_key} do
+    {:ok, order} =
+      ExAcme.OrderBuilder.new_order()
+      |> ExAcme.OrderBuilder.add_dns_identifier("*.example.com")
+      |> ExAcme.submit_order(account_key, client)
+
+    assert order.status == "pending"
+    assert order.identifiers == [%{"type" => "dns", "value" => "*.example.com"}]
+
+    auth_url = List.first(order.authorizations)
+    {:ok, auth} = ExAcme.fetch_authorization(auth_url, account_key, client)
+
+    assert auth.wildcard == true
+  end
 end

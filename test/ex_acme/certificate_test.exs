@@ -32,4 +32,18 @@ defmodule ExAcme.CertificateTest do
     assert {:ok, certificates} = ExAcme.fetch_certificates(certificate_url, account_key, client)
     assert certificates != []
   end
+
+  test "fetching a wildcard certificate", %{client: client, account_key: account_key} do
+    {:ok, order} = ExAcme.TestHelpers.create_order("*.example.com", account_key, client)
+    ExAcme.TestHelpers.validate_order(order, account_key, client)
+    csr = ExAcme.Order.to_csr(order, @private_key)
+
+    ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
+
+    assert_eventually {:ok, %{status: "valid", certificate_url: certificate_url}} =
+                        ExAcme.fetch_order(order.url, account_key, client)
+
+    assert {:ok, certificates} = ExAcme.fetch_certificates(certificate_url, account_key, client)
+    assert certificates != []
+  end
 end

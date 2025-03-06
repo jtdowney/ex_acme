@@ -17,8 +17,12 @@ defmodule ExAcme.TestHelpers do
   end
 
   def create_order(account_key, client) do
+    create_order(Faker.Internet.domain_name(), account_key, client)
+  end
+
+  def create_order(domain, account_key, client) do
     ExAcme.OrderBuilder.new_order()
-    |> ExAcme.OrderBuilder.add_dns_identifier(Faker.Internet.domain_name())
+    |> ExAcme.OrderBuilder.add_dns_identifier(domain)
     |> ExAcme.submit_order(account_key, client)
   end
 
