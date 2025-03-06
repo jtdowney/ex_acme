@@ -1,13 +1,17 @@
 # ExAcme Changelog
 
+## 0.5.1 (2025-03-04)
+
+- Fixed a dialyzer warning about the return from `ExAcme.fetch_certificates/3`.
+
 ## 0.5.0 (2025-03-03)
 
-- Switch to using `Req` instead of `Finch` directly. This change improves the reliability of the library by picking up automatic retries and cleans up request encoding and response parsing.
-- Fix a number of bugs and improve error handling.
+- Switched to using `Req` instead of `Finch` directly. This change improves the reliability of the library by picking up automatic retries and cleans up request encoding and response parsing.
+- Fixed a number of bugs and improved error handling.
 
 ## 0.4.1 (2025-03-02)
 
-- Fix mistake with config values
+- Fixed a mistake with config values
 
 ## 0.4.0 (2025-03-02)
 
