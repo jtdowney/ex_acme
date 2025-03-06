@@ -242,8 +242,8 @@ defmodule ExAcme do
   def fetch_certificates(url, account_key, client) do
     request = ExAcme.Request.build_fetch(url)
 
-    with {:ok, response} <- ExAcme.Request.send_request(request, account_key, client) do
-      {:ok, X509.from_pem(response.body)}
+    with {:ok, %{body: body}} <- ExAcme.Request.send_request(request, account_key, client) do
+      {:ok, X509.from_pem(body)}
     end
   end
 

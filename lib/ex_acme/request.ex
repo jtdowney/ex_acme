@@ -112,11 +112,11 @@ defmodule ExAcme.Request do
 
   ## Returns
 
-    - `{:ok, %{body: map(), headers: map()}}` - On successful request.
-    - `{:error, term()}` - On failure, with details about the error.
+    - `{:ok, %{body: body(), headers: map()}}` - On successful request.
+    - `{:error, reason}` - On failure, with details about the error.
   """
   @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
-          {:ok, %{body: map(), headers: map()}} | {:error, term()}
+          {:ok, %{body: body(), headers: map()}} | {:error, any()}
   def send_request(request, key, client) do
     user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
     headers = [content_type: @content_type, user_agent: user_agent]
