@@ -40,14 +40,47 @@ defmodule ExAcme.RegistrationBuilder do
   ## Parameters
 
     - `registration` - The current registration struct.
-    - `contacts` - A list or single contact URI.
+    - `contacts` - can be:
+      - A list or single contact URI.
+      - When used as a keyword argument (i.e., `email: "user@example.com"`),
+        provides a convenient way to add email contacts. The function automatically
+        prefixes email addresses with "mailto:".
 
   ## Returns
 
     - Updated `ExAcme.RegistrationBuilder` struct.
+
+  ## Examples
+
+      # Add a single email contact
+      iex> registration = ExAcme.RegistrationBuilder.new_registration()
+      iex> |> ExAcme.RegistrationBuilder.contacts(email: "admin@example.com")
+      iex> registration.contact
+      ["mailto:admin@example.com"]
+
+      # Add multiple email contacts
+      iex> registration = ExAcme.RegistrationBuilder.new_registration()
+      iex> |> ExAcme.RegistrationBuilder.contacts(email: ["admin@example.com", "support@example.com"])
+      iex> registration.contact
+      ["mailto:admin@example.com", "mailto:support@example.com"]
+
+      # Add a direct URI contact
+      iex> registration = ExAcme.RegistrationBuilder.new_registration()
+      iex> |> ExAcme.RegistrationBuilder.contacts("mailto:user@example.com")
+      iex> registration.contact
+      ["mailto:user@example.com"]
   """
-  @spec contacts(t(), [String.t()] | String.t()) :: t()
-  def contacts(registration, contacts) do
+  @spec contacts(t(), [String.t()] | String.t() | [email: [String.t()] | String.t()]) :: t()
+  def contacts(registration, email: email) do
+    email = email |> List.wrap() |> Enum.map(&"mailto:#{&1}")
+    %{registration | contact: email}
+  end
+
+  def contacts(registration, contacts) when is_list(contacts) do
+    %{registration | contact: contacts}
+  end
+
+  def contacts(registration, contacts) when is_binary(contacts) do
     %{registration | contact: List.wrap(contacts)}
   end
 

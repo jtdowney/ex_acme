@@ -72,8 +72,7 @@ defmodule ExAcme.OrderTest do
   test "creating an order with multiple domains", %{client: client, account_key: account_key} do
     {:ok, order} =
       ExAcme.OrderBuilder.new_order()
-      |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
-      |> ExAcme.OrderBuilder.add_dns_identifier("example.org")
+      |> ExAcme.OrderBuilder.add_dns_identifier(["example.com", "example.org"])
       |> ExAcme.submit_order(account_key, client)
 
     assert order.status == "pending"

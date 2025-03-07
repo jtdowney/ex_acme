@@ -104,4 +104,37 @@ defmodule ExAcme.RegistrationTest do
              "signature" => "roQDAoexWcvEh6DwOFCV12yUnaA31FcTZmSNaJAWYtI"
            }
   end
+
+  test "builder with single URI contact" do
+    %ExAcme.RegistrationBuilder{contact: contact} =
+      ExAcme.RegistrationBuilder.contacts(ExAcme.RegistrationBuilder.new_registration(), "https://example.com")
+
+    assert contact == ["https://example.com"]
+  end
+
+  test "builder with multiple URI contacts" do
+    %ExAcme.RegistrationBuilder{contact: contact} =
+      ExAcme.RegistrationBuilder.contacts(
+        ExAcme.RegistrationBuilder.new_registration(),
+        ["https://example.com", "https://example.org"]
+      )
+
+    assert contact == ["https://example.com", "https://example.org"]
+  end
+
+  test "builder with single email contact" do
+    %ExAcme.RegistrationBuilder{contact: contact} =
+      ExAcme.RegistrationBuilder.contacts(ExAcme.RegistrationBuilder.new_registration(), email: "admin@example.com")
+
+    assert contact == ["mailto:admin@example.com"]
+  end
+
+  test "builder with multiple email contacts" do
+    %ExAcme.RegistrationBuilder{contact: contact} =
+      ExAcme.RegistrationBuilder.contacts(ExAcme.RegistrationBuilder.new_registration(),
+        email: ["admin@example.com", "user@example.com"]
+      )
+
+    assert contact == ["mailto:admin@example.com", "mailto:user@example.com"]
+  end
 end

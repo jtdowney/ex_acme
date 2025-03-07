@@ -37,57 +37,50 @@ defmodule ExAcme.RevocationBuilder do
   end
 
   @doc """
-  Sets the certificate for revocation using an X509 certificate struct.
+  Sets the certificate for revocation using an X509 certificate struct, DER binary, or PEM string.
 
   ## Parameters
 
     - `revocation`: The current revocation builder.
-    - `certificate`: An `X509.Certificate` struct representing the certificate to revoke.
+    - `certificate`: Keyword with one of the following options:
+      - `certificate`: An `X509.Certificate` struct representing the certificate to revoke.
+      - `der`: A DER-encoded binary of the certificate to revoke.
+      - `pem`: A PEM-encoded string of the certificate to revoke.
 
   ## Returns
 
     - An updated `ExAcme.RevocationBuilder` struct with the certificate set.
+
+  ## Examples
+
+      # Using a certificate struct
+      iex> cert = X509.Certificate.self_signed(X509.PrivateKey.new_ec(:secp256r1), "/CN=example.com")
+      iex> revocation = ExAcme.RevocationBuilder.new_revocation()
+      iex> |> ExAcme.RevocationBuilder.certificate(certificate: cert)
+
+      # Using a PEM string
+      iex> pem = File.read!("path/to/certificate.pem")
+      iex> revocation = ExAcme.RevocationBuilder.new_revocation()
+      iex> |> ExAcme.RevocationBuilder.certificate(pem: pem)
+
+      # Using a DER binary
+      iex> der = File.read!("path/to/certificate.der")
+      iex> revocation = ExAcme.RevocationBuilder.new_revocation()
+      iex> |> ExAcme.RevocationBuilder.certificate(der: der)
   """
-  @spec certificate(t(), X509.Certificate.t()) :: t()
-  def certificate(revocation, certificate) do
+  @spec certificate(t(), certificate: X509.Certificate.t(), der: binary(), pem: binary()) :: t()
+  def certificate(revocation, certificate: certificate) do
     der = X509.Certificate.to_der(certificate)
-    certificate_der(revocation, der)
-  end
-
-  @doc """
-  Sets the certificate for revocation using a DER-encoded binary.
-
-  ## Parameters
-
-    - `revocation`: The current revocation builder.
-    - `der`: A binary containing the DER-encoded certificate.
-
-  ## Returns
-
-    - An updated `ExAcme.RevocationBuilder` struct with the certificate set.
-  """
-  @spec certificate_der(t(), binary()) :: t()
-  def certificate_der(revocation, der) do
     %{revocation | certificate: der}
   end
 
-  @doc """
-  Sets the certificate for revocation using a PEM-encoded string.
+  def certificate(revocation, der: der) do
+    %{revocation | certificate: der}
+  end
 
-  ## Parameters
-
-    - `revocation`: The current revocation builder.
-    - `pem`: A string containing the PEM-encoded certificate.
-
-  ## Returns
-
-    - `{:ok, revocation}` if successful and the PEM certificate is valid.
-    - `{:error, reason}` if the PEM certificate is invalid.
-  """
-  @spec certificate_pem(t(), String.t()) :: t()
-  def certificate_pem(revocation, pem) do
+  def certificate(revocation, pem: pem) do
     with {:ok, cert} <- X509.Certificate.from_pem(pem) do
-      certificate(revocation, cert)
+      certificate(revocation, certificate: cert)
     end
   end
 
@@ -106,6 +99,20 @@ defmodule ExAcme.RevocationBuilder do
   ## Returns
 
     - An updated `ExAcme.RevocationBuilder` struct with the reason set.
+
+  ## Examples
+
+      # Using a named reason
+      iex> revocation = ExAcme.RevocationBuilder.new_revocation()
+      iex> revocation = ExAcme.RevocationBuilder.reason(revocation, :key_compromise)
+      iex> revocation.reason
+      1
+
+      # Using a numeric reason code
+      iex> revocation = ExAcme.RevocationBuilder.new_revocation()
+      iex> revocation = ExAcme.RevocationBuilder.reason(revocation, 4)
+      iex> revocation.reason
+      4
   """
   @spec reason(t(), atom() | integer()) :: t()
   def reason(revocation, reason) when is_atom(reason) do

@@ -30,7 +30,7 @@ defmodule ExAcme.RevocationTest do
 
     assert :ok =
              ExAcme.RevocationBuilder.new_revocation()
-             |> ExAcme.RevocationBuilder.certificate_der(der)
+             |> ExAcme.RevocationBuilder.certificate(der: der)
              |> ExAcme.revoke_certificate(account_key, client)
   end
 
@@ -44,7 +44,7 @@ defmodule ExAcme.RevocationTest do
 
     assert :ok =
              ExAcme.RevocationBuilder.new_revocation()
-             |> ExAcme.RevocationBuilder.certificate_pem(pem)
+             |> ExAcme.RevocationBuilder.certificate(pem: pem)
              |> ExAcme.revoke_certificate(account_key, client)
   end
 
@@ -54,7 +54,7 @@ defmodule ExAcme.RevocationTest do
 
     assert :ok =
              ExAcme.RevocationBuilder.new_revocation()
-             |> ExAcme.RevocationBuilder.certificate(certificate)
+             |> ExAcme.RevocationBuilder.certificate(certificate: certificate)
              |> ExAcme.revoke_certificate(account_key, client)
   end
 
@@ -64,7 +64,7 @@ defmodule ExAcme.RevocationTest do
 
     assert :ok =
              ExAcme.RevocationBuilder.new_revocation()
-             |> ExAcme.RevocationBuilder.certificate(certificate)
+             |> ExAcme.RevocationBuilder.certificate(certificate: certificate)
              |> ExAcme.RevocationBuilder.reason(4)
              |> ExAcme.revoke_certificate(account_key, client)
   end
@@ -75,7 +75,7 @@ defmodule ExAcme.RevocationTest do
 
     assert :ok =
              ExAcme.RevocationBuilder.new_revocation()
-             |> ExAcme.RevocationBuilder.certificate(certificate)
+             |> ExAcme.RevocationBuilder.certificate(certificate: certificate)
              |> ExAcme.RevocationBuilder.reason(:key_compromise)
              |> ExAcme.revoke_certificate(account_key, client)
   end

@@ -62,13 +62,31 @@ defmodule ExAcme.OrderBuilder do
   ## Parameters
 
     - `order` - The current order request.
-    - `domain` - The domain name to add.
+    - `domain` - The domain name to add. Can be a single domain string or a list of domain strings.
 
   ## Returns
 
     - Updated `ExAcme.OrderBuilder` struct.
+
+  ## Examples
+
+      # Add a single domain
+      iex> order = ExAcme.OrderBuilder.new_order()
+      iex> |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      iex> order.identifiers
+      [%{type: "dns", value: "example.com"}]
+
+      # Add multiple domains
+      iex> order = ExAcme.OrderBuilder.new_order()
+      iex> |> ExAcme.OrderBuilder.add_dns_identifier(["example.com", "www.example.com"])
+      iex> Enum.sort_by(order.identifiers, & &1.value)
+      [%{type: "dns", value: "example.com"}, %{type: "dns", value: "www.example.com"}]
   """
-  @spec add_dns_identifier(t(), String.t()) :: t()
+  @spec add_dns_identifier(t(), String.t() | [String.t()]) :: t()
+  def add_dns_identifier(order, domain) when is_list(domain) do
+    Enum.reduce(domain, order, &add_dns_identifier(&2, &1))
+  end
+
   def add_dns_identifier(order, domain) do
     add_identifier(order, "dns", domain)
   end
