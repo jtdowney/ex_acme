@@ -8,6 +8,8 @@ on:
 
 jobs:
   test:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
         versions:
@@ -52,7 +54,7 @@ jobs:
         run: docker compose pull
 
       - name: Run Tests
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix test
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix coveralls.github
 
       - name: Type Check
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix dialyzer --format github

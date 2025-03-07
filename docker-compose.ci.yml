@@ -2,3 +2,12 @@ services:
   ex_acme:
     image: ex_acme:latest
     build: !reset null
+    environment:
+      - GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}
+      - GITHUB_EVENT_PATH=${GITHUB_EVENT_PATH}
+      - GITHUB_REF=${GITHUB_REF}
+      - GITHUB_SHA=${GITHUB_SHA}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - MIX_ENV=test
+    volumes:
+      - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}

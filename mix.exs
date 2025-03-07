@@ -9,12 +9,14 @@ defmodule ExAcme.MixProject do
       elixir: "~> 1.15",
       source_url: "https://github.com/jtdowney/ex_acme",
       start_permanent: Mix.env() == :prod,
+      test_coverage: [tool: ExCoveralls],
       elixirc_paths: elixirc_paths(Mix.env()),
       package: package(),
       description: description(),
       docs: docs(),
       deps: deps(),
-      aliases: aliases()
+      preferred_cli_env: perferred_cli_env(),
+      dialyzer: dialyzer()
     ]
   end
 
@@ -55,6 +57,7 @@ defmodule ExAcme.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.18.5", only: [:dev, :test]},
       {:faker, "~> 0.18.0", only: [:dev, :test]},
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
@@ -65,7 +68,19 @@ defmodule ExAcme.MixProject do
     ]
   end
 
-  defp aliases do
-    []
+  defp perferred_cli_env do
+    [
+      coveralls: :test,
+      "coveralls.detail": :test,
+      "coveralls.post": :test,
+      "coveralls.html": :test,
+      "coveralls.cobertura": :test
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_add_apps: [:ex_unit]
+    ]
   end
 end
