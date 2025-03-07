@@ -4,7 +4,7 @@ defmodule ExAcme.Challenge do
 
   Provides functionalities to handle challenges required for validation.
 
-  ## Attributes
+  ### Attributes
 
     - `url` - The URL of the challenge.
     - `status` - The current status of the challenge.

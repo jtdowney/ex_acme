@@ -71,8 +71,7 @@ case ExAcme.register_account(registration, key, MyAcme) do
 end
 ```
 
-> [!IMPORTANT]
-> From now on you can use the `account_key` to perform operations on the account. This structure holds the JSON Web Key (JWK) associated with the account and the Key ID (kid) assigned by the ACME server.
+From now on you can use the `account_key` to perform operations on the account. This structure holds the JSON Web Key (JWK) associated with the account and the Key ID (kid) assigned by the ACME server.
 
 ### Creating an order request
 

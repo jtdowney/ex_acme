@@ -4,7 +4,7 @@ defmodule ExAcme.AccountKey do
 
   Provides functionalities to generate keys, sign requests, and manage key identifiers.
 
-  ## Attributes
+  ### Attributes
 
     - `key` - The JOSE JSON Web Key (JWK).
     - `algorithm` - The algorithm of the key (e.g., ES256).

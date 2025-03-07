@@ -4,7 +4,7 @@ defmodule ExAcme.Order do
 
   Provides functionalities to fetch, finalize, and parse order details from the ACME server.
 
-  ## Attributes
+  ### Attributes
 
     - `url` - The URL of the order.
     - `status` - The current status of the order.

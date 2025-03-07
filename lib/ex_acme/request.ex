@@ -1,6 +1,11 @@
 defmodule ExAcme.Request do
   @moduledoc """
   Provides functions to build and manage HTTP requests for the ACME API.
+
+  ### Attributes
+
+    - `url` - The target URL for the request
+    - `body` - The request body content (string or map)
   """
 
   defstruct [:url, :body]

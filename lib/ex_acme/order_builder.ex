@@ -4,7 +4,7 @@ defmodule ExAcme.OrderBuilder do
 
   Provides functionalities to build and submit order requests to the ACME server.
 
-  ## Attributes
+  ### Attributes
 
     - `identifiers` - List of identifiers for the order.
     - `profile` - The profile to apply to the order.

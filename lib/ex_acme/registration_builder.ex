@@ -4,7 +4,7 @@ defmodule ExAcme.RegistrationBuilder do
 
   Provides functionalities to create and manage account registrations with the ACME server.
 
-  ## Attributes
+  ### Attributes
 
     - `contact` - List of contact URIs.
     - `terms_of_service_agreed` - Boolean indicating agreement to terms.

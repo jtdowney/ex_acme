@@ -4,7 +4,7 @@ defmodule ExAcme.Account do
 
   Provides functionalities to fetch account details from the ACME server.
 
-  ## Attributes
+  ### Attributes
 
     - `url` - The URL of the account.
     - `status` - The current status of the account.

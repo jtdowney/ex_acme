@@ -4,7 +4,7 @@ defmodule ExAcme.Authorization do
 
   Provides functionalities to fetch and process authorization details from the ACME server.
 
-  ## Attributes
+  ### Attributes
 
     - `url` - The URL of the authorization.
     - `status` - The current status of the authorization.

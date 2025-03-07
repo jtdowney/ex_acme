@@ -4,6 +4,11 @@ defmodule ExAcme.RevocationBuilder do
 
   Use this module to construct a revocation request by supplying the certificate in one of several formats
   (`X509.Certificate` struct, DER binary, or PEM string) and an optional revocation reason.
+
+  ### Attributes
+
+    - `certificate` - The DER-encoded certificate to revoke
+    - `reason` - The revocation reason
   """
   defstruct [:certificate, :reason]
 

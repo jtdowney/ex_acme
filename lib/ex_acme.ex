@@ -6,7 +6,7 @@ defmodule ExAcme do
   generating keys, sending ACME requests, and handling directory and nonce
   information.
 
-  ## Features
+  ### Features
 
     - Start and manage the ExAcme client agent.
     - Fetch directory information and terms of service.
