@@ -56,7 +56,7 @@ key = ExAcme.generate_key()
 # Create and configure the registration
 registration =
   RegistrationBuilder.new_registration()
-  |> RegistrationBuilder.contacts(["mailto:admin@example.com"])
+  |> RegistrationBuilder.contacts(email: "admin@example.com")
   |> RegistrationBuilder.agree_to_terms()
 
 # Register the account
@@ -83,8 +83,7 @@ alias ExAcme.OrderBuilder
 # Create a new order request
 order_request =
   OrderBuilder.new_order()
-  |> OrderBuilder.add_dns_identifier("example.com")
-  |> OrderBuilder.add_dns_identifier("www.example.com")
+  |> OrderBuilder.add_dns_identifier(["example.com", "www.example.com"])
 
 # Submit the order
 case ExAcme.submit_order(order_request, account_key, MyAcme) do
