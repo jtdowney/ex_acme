@@ -24,7 +24,7 @@ The package can be installed by adding `ex_acme` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:ex_acme, "~> 0.5.1"}
+    {:ex_acme, "~> 0.5.2"}
   ]
 end
 ```

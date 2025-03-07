@@ -1,6 +1,10 @@
 # ExAcme Changelog
 
-## 0.5.1 (2025-03-04)
+## 0.5.2 (2025-03-06)
+
+- Added sugar to `ExAcme.OrderBuilder.add_dns_identifier/2`, `ExAcme.RegistrationBuilder.contacts/2`, and improved `ExAcme.RevocationBuilder.certificate/2`.
+
+## 0.5.1 (2025-03-06)
 
 - Fixed a dialyzer warning about the return from `ExAcme.fetch_certificates/3`.
 
