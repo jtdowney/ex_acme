@@ -156,8 +156,8 @@ defmodule ExAcme do
   def external_account_required?(client) do
     client
     |> directory()
-    |> get_in(["meta", "externalAccountRequired"])
-    || false
+    |> get_in(["meta", "externalAccountRequired"]) ||
+      false
   end
 
   @doc """

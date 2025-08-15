@@ -5,14 +5,12 @@ defmodule ExAcme.OrderBuilderTest do
   describe "to_map/1" do
     test "returns error for empty identifiers" do
       order = ExAcme.OrderBuilder.new_order()
-      
+
       assert {:error, :no_identifiers} = ExAcme.OrderBuilder.to_map(order)
     end
 
     test "returns ok with map for valid order with identifiers" do
-      order =
-        ExAcme.OrderBuilder.new_order()
-        |> ExAcme.OrderBuilder.add_dns_identifier("example.com")
+      order = ExAcme.OrderBuilder.add_dns_identifier(ExAcme.OrderBuilder.new_order(), "example.com")
 
       assert {:ok, map} = ExAcme.OrderBuilder.to_map(order)
       assert map.identifiers == [%{type: "dns", value: "example.com"}]
