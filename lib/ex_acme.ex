@@ -138,7 +138,7 @@ defmodule ExAcme do
 
     - `client` - The pid or name of the ExAcme client agent.
   """
-  @spec profiles(client()) :: [map()]
+  @spec profiles(client()) :: map()
   def profiles(client) do
     client
     |> directory()
