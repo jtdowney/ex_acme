@@ -395,7 +395,7 @@ defmodule ExAcme do
     body =
       body
       |> ExAcme.Utils.to_camel_case()
-      |> Map.put(:certificate, certificate)
+      |> Map.put("certificate", certificate)
 
     request = ExAcme.Request.build_named("revokeCert", body, client)
 

@@ -1,6 +1,6 @@
 defmodule ExAcme.Utils do
   @moduledoc false
-  @spec to_camel_case(map() | atom() | String.t()) :: map() | atom() | String.t()
+  @spec to_camel_case(map() | atom() | String.t()) :: map() | String.t()
   def to_camel_case(map) when is_map(map) do
     Map.new(map, fn {key, value} ->
       {
@@ -14,7 +14,6 @@ defmodule ExAcme.Utils do
     key
     |> Atom.to_string()
     |> to_camel_case()
-    |> String.to_atom()
   end
 
   def to_camel_case(key) when is_binary(key) do
