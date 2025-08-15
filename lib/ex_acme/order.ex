@@ -76,17 +76,27 @@ defmodule ExAcme.Order do
 
   ## Returns
 
-    - `X509.CSR` struct.
+    - `{:ok, X509.CSR.t()}` - The generated CSR.
+    - `{:error, :empty_identifiers}` - If the order has no identifiers.
   """
-  @spec to_csr(ExAcme.Order.t(), X509.PrivateKey.t()) :: X509.CSR.t()
+  @spec to_csr(ExAcme.Order.t(), X509.PrivateKey.t()) :: {:ok, X509.CSR.t()} | {:error, :empty_identifiers}
   def to_csr(order, private_key) do
-    cn = order.identifiers |> List.first() |> Map.get("value")
-    subject_alt_names = Enum.map(order.identifiers, &Map.get(&1, "value"))
+    case order.identifiers do
+      [] ->
+        {:error, :empty_identifiers}
 
-    X509.CSR.new(private_key, "CN=#{cn}",
-      extension_request: [
-        X509.Certificate.Extension.subject_alt_name(subject_alt_names)
-      ]
-    )
+      identifiers ->
+        cn = identifiers |> List.first() |> Map.get("value")
+        subject_alt_names = Enum.map(identifiers, &Map.get(&1, "value"))
+
+        csr =
+          X509.CSR.new(private_key, "CN=#{cn}",
+            extension_request: [
+              X509.Certificate.Extension.subject_alt_name(subject_alt_names)
+            ]
+          )
+
+        {:ok, csr}
+    end
   end
 end

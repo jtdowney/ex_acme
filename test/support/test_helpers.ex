@@ -52,7 +52,7 @@ defmodule ExAcme.TestHelpers do
     ExAcme.TestHelpers.validate_order(order, account_key, client)
 
     private_key = X509.PrivateKey.new_ec(:secp256r1)
-    csr = ExAcme.Order.to_csr(order, private_key)
+    {:ok, csr} = ExAcme.Order.to_csr(order, private_key)
 
     ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 

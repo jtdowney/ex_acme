@@ -35,7 +35,7 @@ defmodule ExAcme.OrderTest do
   test "finalize an order", %{client: client, account_key: account_key} do
     {:ok, order} = ExAcme.TestHelpers.create_order(account_key, client)
     ExAcme.TestHelpers.validate_order(order, account_key, client)
-    csr = ExAcme.Order.to_csr(order, @private_key)
+    {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
 
     {:ok, finalized_order} = ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 
@@ -130,5 +130,12 @@ defmodule ExAcme.OrderTest do
     {:ok, auth} = ExAcme.fetch_authorization(auth_url, account_key, client)
 
     assert auth.wildcard == true
+  end
+
+  test "to_csr with empty identifiers returns error" do
+    order = %ExAcme.Order{identifiers: []}
+    private_key = X509.PrivateKey.new_ec(:secp256r1)
+
+    assert {:error, :empty_identifiers} = ExAcme.Order.to_csr(order, private_key)
   end
 end

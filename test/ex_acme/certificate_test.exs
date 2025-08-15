@@ -14,7 +14,7 @@ defmodule ExAcme.CertificateTest do
 
   test "creating a CSR from an order", %{order: order} do
     %{"type" => "dns", "value" => domain_name} = List.first(order.identifiers)
-    csr = ExAcme.Order.to_csr(order, @private_key)
+    {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
     {:Extension, _, _, [dNSName: name]} = csr |> X509.CSR.extension_request() |> List.first()
 
     assert name == String.to_charlist(domain_name)
@@ -22,7 +22,7 @@ defmodule ExAcme.CertificateTest do
 
   test "fetching a certificate", %{order: order, client: client, account_key: account_key} do
     ExAcme.TestHelpers.validate_order(order, account_key, client)
-    csr = ExAcme.Order.to_csr(order, @private_key)
+    {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
 
     ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 
@@ -36,7 +36,7 @@ defmodule ExAcme.CertificateTest do
   test "fetching a wildcard certificate", %{client: client, account_key: account_key} do
     {:ok, order} = ExAcme.TestHelpers.create_order("*.example.com", account_key, client)
     ExAcme.TestHelpers.validate_order(order, account_key, client)
-    csr = ExAcme.Order.to_csr(order, @private_key)
+    {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
 
     ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 
