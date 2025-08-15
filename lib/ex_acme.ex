@@ -491,9 +491,13 @@ defmodule ExAcme do
   @spec submit_order(ExAcme.OrderBuilder.t() | map(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Order.t()} | {:error, any()}
   def submit_order(%ExAcme.OrderBuilder{} = order_builder, account_key, client) do
-    order_builder
-    |> ExAcme.OrderBuilder.to_map()
-    |> submit_order(account_key, client)
+    case ExAcme.OrderBuilder.to_map(order_builder) do
+      {:ok, order_map} ->
+        submit_order(order_map, account_key, client)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   def submit_order(order, account_key, client) do

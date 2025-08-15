@@ -145,8 +145,8 @@ defmodule ExAcme.OrderBuilder do
   @doc """
   Converts an order request to a map.
 
-  This function transforms the OrderBuilder struct into a map format,
-  removes nil values, and converts keys to camelCase for API compatibility.
+  This function transforms the OrderBuilder struct into a map format
+  and removes nil values. Returns an error if no identifiers are present.
 
   ## Parameters
 
@@ -154,12 +154,20 @@ defmodule ExAcme.OrderBuilder do
 
   ## Returns
 
-    - A map representation of the order.
+    - `{:ok, map}` - A map representation of the order if valid.
+    - `{:error, :no_identifiers}` - If the order has no identifiers.
   """
-  @spec to_map(t()) :: map()
+  @spec to_map(t()) :: {:ok, map()} | {:error, :no_identifiers}
+  def to_map(%__MODULE__{identifiers: []} = _order) do
+    {:error, :no_identifiers}
+  end
+
   def to_map(order) do
-    order
-    |> Map.from_struct()
-    |> Map.reject(fn {_, value} -> value == nil end)
+    result =
+      order
+      |> Map.from_struct()
+      |> Map.reject(fn {_, value} -> value == nil end)
+
+    {:ok, result}
   end
 end
