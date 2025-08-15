@@ -26,7 +26,7 @@ defmodule ExAcme do
 
   @typedoc "Client process holding directory cache and state"
 
-  @type client() :: client()
+  @type client() :: Agent.agent()
 
   @doc ~S"""
   Generates a cryptographic key pair for use with ACME operations.
