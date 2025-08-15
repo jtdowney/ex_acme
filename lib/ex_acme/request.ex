@@ -174,7 +174,7 @@ defmodule ExAcme.Request do
 
   defp sign(%JOSE.JWK{} = key, body, header) do
     jwk = key |> JOSE.JWK.to_public_map() |> elem(1)
-    algorithm = jwk |> JOSE.JWK.to_map() |> elem(1) |> Map.fetch!("alg")
+    algorithm = Map.fetch!(jwk, "alg")
     header = Map.merge(header, %{"alg" => algorithm, "jwk" => jwk})
     body |> JOSE.JWK.sign(header, key) |> elem(1)
   end
