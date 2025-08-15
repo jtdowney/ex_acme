@@ -15,7 +15,7 @@ defmodule ExAcme.MixProject do
       description: description(),
       docs: docs(),
       deps: deps(),
-      preferred_cli_env: perferred_cli_env(),
+      preferred_cli_env: preferred_cli_env(),
       dialyzer: dialyzer()
     ]
   end
@@ -68,7 +68,7 @@ defmodule ExAcme.MixProject do
     ]
   end
 
-  defp perferred_cli_env do
+  defp preferred_cli_env do
     [
       coveralls: :test,
       "coveralls.detail": :test,
