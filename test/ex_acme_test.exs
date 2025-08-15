@@ -30,7 +30,7 @@ defmodule ExAcmeTest do
   end
 
   test "named directory lets_encrypt" do
-    {:ok, pid} = ExAcme.start_link(finch: MyFinch, directory_url: :lets_encrypt)
+    {:ok, pid} = ExAcme.start_link(directory_url: :lets_encrypt)
     %{directory_url: directory_url} = Agent.get(pid, & &1)
     assert directory_url == "https://acme-v02.api.letsencrypt.org/directory"
   end
