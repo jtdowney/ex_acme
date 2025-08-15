@@ -157,6 +157,7 @@ defmodule ExAcme do
     client
     |> directory()
     |> get_in(["meta", "externalAccountRequired"])
+    || false
   end
 
   @doc """
