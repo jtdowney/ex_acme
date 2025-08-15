@@ -34,4 +34,42 @@ defmodule ExAcmeTest do
     %{directory_url: directory_url} = Agent.get(pid, & &1)
     assert directory_url == "https://acme-v02.api.letsencrypt.org/directory"
   end
+
+  test "current_nonce basic functionality", %{client: client} do
+    {:ok, nonce1} = ExAcme.current_nonce(client)
+    assert is_binary(nonce1)
+    assert String.length(nonce1) > 0
+
+    {:ok, nonce2} = ExAcme.current_nonce(client)
+    assert is_binary(nonce2)
+    assert String.length(nonce2) > 0
+
+    assert nonce1 != nonce2
+  end
+
+  test "nonce storage and retrieval", %{client: client} do
+    Agent.update(client, &Map.put(&1, :nonce, "test-nonce-from-server"))
+
+    {:ok, nonce} = ExAcme.current_nonce(client)
+    assert nonce == "test-nonce-from-server"
+
+    {:ok, new_nonce} = ExAcme.current_nonce(client)
+    assert is_binary(new_nonce)
+    assert new_nonce != "test-nonce-from-server"
+  end
+
+  test "multiple concurrent nonce requests", %{client: client} do
+    tasks = for _i <- 1..5 do
+      Task.async(fn ->
+        case ExAcme.current_nonce(client) do
+          {:ok, nonce} when is_binary(nonce) -> :ok
+          error -> error
+        end
+      end)
+    end
+
+    results = Task.await_many(tasks, 5000)
+
+    assert Enum.all?(results, &(&1 == :ok))
+  end
 end
