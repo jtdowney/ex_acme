@@ -29,10 +29,10 @@ defmodule ExAcme.RequestTest do
       assert seconds >= 299 and seconds <= 301
     end
 
-    test "returns error for past datetime" do
+    test "returns zero for past datetime" do
       past_time = DateTime.utc_now() |> DateTime.add(-300, :second) |> DateTime.to_iso8601()
 
-      assert Request.parse_retry_after(past_time) == :error
+      assert Request.parse_retry_after(past_time) == {:ok, 0}
     end
 
     test "parses RFC 7231 HTTP-date format" do
@@ -50,17 +50,37 @@ defmodule ExAcme.RequestTest do
       assert seconds >= 239 and seconds <= 241
     end
 
-    test "returns error for past HTTP-date" do
+    test "returns zero for past HTTP-date" do
       past_time = DateTime.add(DateTime.utc_now(), -240, :second)
       past_rfc1123 = Calendar.strftime(past_time, "%a, %d %b %Y %H:%M:%S GMT")
 
-      assert Request.parse_retry_after(past_rfc1123) == :error
+      assert Request.parse_retry_after(past_rfc1123) == {:ok, 0}
     end
 
     test "returns error for invalid datetime format" do
       assert Request.parse_retry_after("not-a-date") == :error
       assert Request.parse_retry_after("2025-13-01T12:00:00Z") == :error
       assert Request.parse_retry_after("Invalid, 99 Foo 9999 99:99:99 GMT") == :error
+    end
+
+    test "handles values with leading/trailing whitespace" do
+      assert Request.parse_retry_after(" 120 ") == {:ok, 120}
+      assert Request.parse_retry_after("\t60\n") == {:ok, 60}
+      assert Request.parse_retry_after("  300  ") == {:ok, 300}
+
+      # Test with datetime formats and whitespace
+      future_time = DateTime.add(DateTime.utc_now(), 300, :second)
+      iso8601_with_space = "  #{DateTime.to_iso8601(future_time)}  "
+
+      assert {:ok, seconds} = Request.parse_retry_after(iso8601_with_space)
+      assert seconds >= 299 and seconds <= 301
+
+      # Test with HTTP-date format and whitespace
+      rfc1123_date = Calendar.strftime(future_time, "%a, %d %b %Y %H:%M:%S GMT")
+      rfc1123_with_space = "\t#{rfc1123_date}\n"
+
+      assert {:ok, seconds} = Request.parse_retry_after(rfc1123_with_space)
+      assert seconds >= 299 and seconds <= 301
     end
   end
 end

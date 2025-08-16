@@ -175,7 +175,10 @@ defmodule ExAcme.Request do
     end
   end
 
+  @doc false
   def parse_retry_after(value) do
+    value = String.trim(value)
+
     parse_integer_seconds(value) ||
       parse_iso8601_datetime(value) ||
       parse_http_date(value) ||
@@ -199,8 +202,11 @@ defmodule ExAcme.Request do
   defp parse_http_date(value) do
     case :httpd_util.convert_request_date(String.to_charlist(value)) do
       {{year, month, day}, {hour, minute, second}} ->
-        case DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second), "Etc/UTC") do
-          {:ok, datetime} -> calculate_seconds_from_now(datetime)
+        with {:ok, date} <- Date.new(year, month, day),
+             {:ok, time} <- Time.new(hour, minute, second),
+             {:ok, datetime} <- DateTime.new(date, time, "Etc/UTC") do
+          calculate_seconds_from_now(datetime)
+        else
           _ -> nil
         end
 
@@ -208,12 +214,12 @@ defmodule ExAcme.Request do
         nil
     end
   rescue
-    _ -> nil
+    FunctionClauseError -> nil
   end
 
   defp calculate_seconds_from_now(datetime) do
-    seconds = DateTime.diff(datetime, DateTime.utc_now())
-    if seconds > 0, do: {:ok, seconds}
+    seconds = max(DateTime.diff(datetime, DateTime.utc_now()), 0)
+    {:ok, seconds}
   end
 
   defp sign_request(url, body, key, nonce) do

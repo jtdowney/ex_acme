@@ -238,6 +238,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, certificate_chain}` - If the certificate chain is successfully fetched.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), client()) ::
