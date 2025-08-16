@@ -118,10 +118,12 @@ defmodule ExAcme.Request do
   ## Returns
 
     - `{:ok, %{body: body(), headers: map()}}` - On successful request.
-    - `{:error, reason}` - On failure, with details about the error.
+    - `{:retry_after, seconds}` - When the server returns a Retry-After header,
+      indicating the client should wait the specified number of seconds before retrying.
+    - `{:error, reason}` - On other failures, with details about the error.
   """
   @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
-          {:ok, %{body: body(), headers: map()}} | {:error, any()}
+          {:ok, %{body: body(), headers: map()}} | {:retry_after, non_neg_integer()} | {:error, any()}
   def send_request(request, key, client) do
     user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
     headers = [content_type: @content_type, user_agent: user_agent]
@@ -137,14 +139,7 @@ defmodule ExAcme.Request do
           send_request(request, key, client)
 
         {status, body} when status >= 400 ->
-          body =
-            if body == "" do
-              {:http_error, status}
-            else
-              body
-            end
-
-          {:error, body}
+          handle_error_response(headers, status, body)
 
         {_, body} ->
           {:ok, %{body: body, headers: Map.new(headers)}}
@@ -157,6 +152,74 @@ defmodule ExAcme.Request do
       {:ok, [nonce]} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
       _ -> nil
     end
+  end
+
+  defp handle_error_response(headers, status, body) do
+    case extract_retry_after(headers) do
+      {:ok, retry_after_seconds} ->
+        {:retry_after, retry_after_seconds}
+
+      :error ->
+        error_body = if body == "", do: {:http_error, status}, else: body
+        {:error, error_body}
+    end
+  end
+
+  defp extract_retry_after(headers) do
+    case Map.get(headers, "retry-after") do
+      [value | _] when is_binary(value) ->
+        parse_retry_after(value)
+
+      _ ->
+        :error
+    end
+  end
+
+  @doc false
+  def parse_retry_after(value) do
+    value = String.trim(value)
+
+    parse_integer_seconds(value) ||
+      parse_iso8601_datetime(value) ||
+      parse_http_date(value) ||
+      :error
+  end
+
+  defp parse_integer_seconds(value) do
+    case Integer.parse(value) do
+      {seconds, ""} when seconds >= 0 -> {:ok, seconds}
+      _ -> nil
+    end
+  end
+
+  defp parse_iso8601_datetime(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, datetime, _offset} -> calculate_seconds_from_now(datetime)
+      _ -> nil
+    end
+  end
+
+  defp parse_http_date(value) do
+    case :httpd_util.convert_request_date(String.to_charlist(value)) do
+      {{year, month, day}, {hour, minute, second}} ->
+        with {:ok, date} <- Date.new(year, month, day),
+             {:ok, time} <- Time.new(hour, minute, second),
+             {:ok, datetime} <- DateTime.new(date, time, "Etc/UTC") do
+          calculate_seconds_from_now(datetime)
+        else
+          _ -> nil
+        end
+
+      _ ->
+        nil
+    end
+  rescue
+    FunctionClauseError -> nil
+  end
+
+  defp calculate_seconds_from_now(datetime) do
+    seconds = max(DateTime.diff(datetime, DateTime.utc_now()), 0)
+    {:ok, seconds}
   end
 
   defp sign_request(url, body, key, nonce) do

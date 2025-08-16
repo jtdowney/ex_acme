@@ -16,7 +16,6 @@ ExAcme is a lightweight, developer-friendly Elixir library for interacting with 
 ## Missing
 
 - [Renewal information extension (DRAFT)](https://datatracker.ietf.org/doc/draft-ietf-acme-ari/)
-- Exposing `Retry-After` header information.
 
 ## Installation
 
@@ -117,14 +116,17 @@ for auth_url <- order.authorizations do
     # Trigger validation
     {:ok, _validated_challenge} = ExAcme.start_challenge_validation(challenge.url, account_key, MyAcme)
 
-    # Optionally, wait and verify the challenge status
-    :timer.sleep(5000)
-    {:ok, validated_challenge} = ExAcme.fetch_challenge(challenge.url, account_key, MyAcme)
+    # Poll for challenge completion with proper backoff handling
+    case poll_until_valid(challenge.url, account_key, MyAcme) do
+      {:ok, validated_challenge} ->
+        if validated_challenge.status == "valid" do
+          IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
+        else
+          IO.puts("Challenge for #{authorization.identifier["value"]} failed.")
+        end
 
-    if validated_challenge.status == "valid" do
-      IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
-    else
-      IO.puts("Challenge for #{authorization.identifier["value"]} failed.")
+      {:error, reason} ->
+        IO.puts("Failed to validate challenge for #{authorization.identifier["value"]}: #{inspect(reason)}")
     end
   else
     IO.puts("No challenge found for #{authorization.identifier["value"]}.")
@@ -174,6 +176,51 @@ case ExAcme.fetch_certificates(finalized_order.certificate_url, account_key, MyA
     IO.inspect(reason)
 end
 ```
+
+## Handling Retry-After Responses
+
+ExAcme surfaces `Retry-After` headers from ACME servers by returning `{:retry_after, seconds}` when the server indicates you should wait before retrying. Here's how to implement proper polling with backoff:
+
+```elixir
+defp poll_until_valid(url, account_key, client, max_attempts \\ 10) do
+  poll_until_valid(url, account_key, client, max_attempts, 1)
+end
+
+defp poll_until_valid(_url, _account_key, _client, 0, _attempt) do
+  {:error, :max_attempts_reached}
+end
+
+defp poll_until_valid(url, account_key, client, max_attempts, attempt) do
+  case ExAcme.fetch_challenge(url, account_key, client) do
+    {:ok, challenge} ->
+      case challenge.status do
+        "valid" ->
+          {:ok, challenge}
+        "invalid" ->
+          {:error, {:challenge_failed, challenge}}
+        "pending" ->
+          # Wait a bit and retry
+          :timer.sleep(2000)
+          poll_until_valid(url, account_key, client, max_attempts - 1, attempt + 1)
+        "processing" ->
+          # Wait a bit and retry
+          :timer.sleep(1000)
+          poll_until_valid(url, account_key, client, max_attempts - 1, attempt + 1)
+      end
+
+    {:retry_after, seconds} ->
+      # Server told us exactly how long to wait
+      IO.puts("Server requested retry after #{seconds} seconds")
+      :timer.sleep(seconds * 1000)
+      poll_until_valid(url, account_key, client, max_attempts - 1, attempt + 1)
+
+    {:error, reason} ->
+      {:error, reason}
+  end
+end
+```
+
+This pattern works for all fetch operations (`fetch_order/3`, `fetch_authorization/3`, `fetch_challenge/3`, etc.) and `start_challenge_validation/3`.
 
 ## License
 

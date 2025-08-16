@@ -174,9 +174,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, account}` - If the account is successfully deactivated, returns the updated account information.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the deactivation process.
   """
-  @spec deactivate_account(ExAcme.AccountKey.t(), client()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
+  @spec deactivate_account(ExAcme.AccountKey.t(), client()) ::
+          {:ok, ExAcme.Account.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def deactivate_account(%ExAcme.AccountKey{kid: kid} = account_key, client) do
     request = ExAcme.Request.build_update(kid, %{status: "deactivated"})
 
@@ -197,9 +199,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, account}` - If the account is successfully fetched.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_account(String.t(), ExAcme.AccountKey.t(), client()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
+  @spec fetch_account(String.t(), ExAcme.AccountKey.t(), client()) ::
+          {:ok, ExAcme.Account.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def fetch_account(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Account.from_response/2)
   end
@@ -216,10 +220,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, authorization}` - If the authorization is successfully fetched.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_authorization(String.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Authorization.t()} | {:error, any()}
+          {:ok, ExAcme.Authorization.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def fetch_authorization(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Authorization.from_response/2)
   end
@@ -236,10 +241,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, certificate_chain}` - If the certificate chain is successfully fetched.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, [X509.Certificate.t()]} | {:error, any()}
+          {:ok, [X509.Certificate.t()]} | {:retry_after, non_neg_integer()} | {:error, any()}
   def fetch_certificates(url, account_key, client) do
     request = ExAcme.Request.build_fetch(url)
 
@@ -260,10 +266,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, challenge}` - If the challenge is successfully fetched.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_challenge(String.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Challenge.t()} | {:error, any()}
+          {:ok, ExAcme.Challenge.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def fetch_challenge(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Challenge.from_response/2)
   end
@@ -280,10 +287,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order is successfully fetched.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_order(String.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Order.t()} | {:error, any()}
+          {:ok, ExAcme.Order.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def fetch_order(url, account_key, client) do
     fetch_object(url, account_key, client, &ExAcme.Order.from_response/2)
   end
@@ -302,10 +310,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order is successfully finalized.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the finalization process.
   """
   @spec finalize_order(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Order.t()} | {:error, any()}
+          {:ok, ExAcme.Order.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def finalize_order(finalize_url, csr, account_key, client) do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
     request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
@@ -334,10 +343,11 @@ defmodule ExAcme do
     - `{:ok, account, account_key}` - If the registration is successful, returns the account
       information and the corresponding account key. An account key is the provided JSON Web Key
       (JWK) and the Key Identifier (kid) returned by the server.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during registration.
   """
   @spec register_account(ExAcme.RegistrationBuilder.t() | map(), JOSE.JWK.t(), client(), keyword()) ::
-          {:ok, ExAcme.Account.t(), ExAcme.AccountKey.t()} | {:error, any()}
+          {:ok, ExAcme.Account.t(), ExAcme.AccountKey.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def register_account(registration_builder, key, client, opts \\ [])
 
   def register_account(%ExAcme.RegistrationBuilder{} = registration_builder, key, client, opts) do
@@ -379,10 +389,11 @@ defmodule ExAcme do
   ## Returns
 
     - `:ok` - If the certificate is successfully revoked.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the revocation process.
   """
   @spec revoke_certificate(ExAcme.RevocationBuilder.t() | map(), ExAcme.AccountKey.t(), ExAcme.client()) ::
-          :ok | {:error, any()}
+          :ok | {:retry_after, non_neg_integer()} | {:error, any()}
   def revoke_certificate(%ExAcme.RevocationBuilder{} = revocation_builder, account_key, client) do
     revocation_builder
     |> ExAcme.RevocationBuilder.to_map()
@@ -420,10 +431,11 @@ defmodule ExAcme do
 
     - `{:ok, account_key}` - If the key rotation is successful, returns the new account key, which
        is the provided JSON Web Key (JWK) and the Key ID (kid).
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during key rotation.
   """
   @spec rotate_account_key(ExAcme.AccountKey.t(), JOSE.JWK.t(), client()) ::
-          {:ok, ExAcme.AccountKey.t()} | {:error, any()}
+          {:ok, ExAcme.AccountKey.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def rotate_account_key(%ExAcme.AccountKey{kid: kid} = old_account_key, new_key, client) do
     url = ExAcme.Request.lookup_named_url("keyChange", client)
     algorithm = new_key |> JOSE.JWK.to_map() |> elem(1) |> Map.fetch!("alg")
@@ -457,10 +469,11 @@ defmodule ExAcme do
 
     - `{:ok, challenge}` - If the challenge validation request is successfully sent, returns the
       updated challenge information.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the validation request.
   """
   @spec start_challenge_validation(String.t(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Challenge.t()} | {:error, any()}
+          {:ok, ExAcme.Challenge.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def start_challenge_validation(url, account_key, client) do
     request = ExAcme.Request.build_update(url, %{})
 
@@ -486,10 +499,11 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order submission is successful, returns the order information.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during order submission.
   """
   @spec submit_order(ExAcme.OrderBuilder.t() | map(), ExAcme.AccountKey.t(), client()) ::
-          {:ok, ExAcme.Order.t()} | {:error, any()}
+          {:ok, ExAcme.Order.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
   def submit_order(%ExAcme.OrderBuilder{} = order_builder, account_key, client) do
     case ExAcme.OrderBuilder.to_map(order_builder) do
       {:ok, order_map} ->
