@@ -118,7 +118,9 @@ defmodule ExAcme.Request do
   ## Returns
 
     - `{:ok, %{body: body(), headers: map()}}` - On successful request.
-    - `{:error, reason}` - On failure, with details about the error.
+    - `{:error, {:retry_after, seconds}}` - When the server returns a Retry-After header,
+      indicating the client should wait the specified number of seconds before retrying.
+    - `{:error, reason}` - On other failures, with details about the error.
   """
   @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
           {:ok, %{body: body(), headers: map()}} | {:error, any()}
@@ -137,14 +139,20 @@ defmodule ExAcme.Request do
           send_request(request, key, client)
 
         {status, body} when status >= 400 ->
-          body =
-            if body == "" do
-              {:http_error, status}
-            else
-              body
-            end
+          case extract_retry_after(headers) do
+            {:ok, retry_after_seconds} ->
+              {:error, {:retry_after, retry_after_seconds}}
 
-          {:error, body}
+            :error ->
+              body =
+                if body == "" do
+                  {:http_error, status}
+                else
+                  body
+                end
+
+              {:error, body}
+          end
 
         {_, body} ->
           {:ok, %{body: body, headers: Map.new(headers)}}
@@ -156,6 +164,34 @@ defmodule ExAcme.Request do
     case Map.fetch(headers, "replay-nonce") do
       {:ok, [nonce]} -> Agent.update(client, &Map.put(&1, :nonce, nonce))
       _ -> nil
+    end
+  end
+
+  defp extract_retry_after(headers) do
+    case Map.get(headers, "retry-after") do
+      [value] when is_binary(value) ->
+        parse_retry_after(value)
+
+      _ ->
+        :error
+    end
+  end
+
+  def parse_retry_after(value) do
+    case Integer.parse(value) do
+      {seconds, ""} when seconds >= 0 ->
+        {:ok, seconds}
+
+      _ ->
+        case DateTime.from_iso8601(value) do
+          {:ok, datetime, _offset} ->
+            now = DateTime.utc_now()
+            seconds = DateTime.diff(datetime, now)
+            if seconds > 0, do: {:ok, seconds}, else: :error
+
+          {:error, _} ->
+            :error
+        end
     end
   end
 

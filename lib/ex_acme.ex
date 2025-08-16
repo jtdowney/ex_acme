@@ -197,6 +197,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, account}` - If the account is successfully fetched.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_account(String.t(), ExAcme.AccountKey.t(), client()) :: {:ok, ExAcme.Account.t()} | {:error, any()}
@@ -216,6 +217,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, authorization}` - If the authorization is successfully fetched.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_authorization(String.t(), ExAcme.AccountKey.t(), client()) ::
@@ -260,6 +262,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, challenge}` - If the challenge is successfully fetched.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_challenge(String.t(), ExAcme.AccountKey.t(), client()) ::
@@ -280,6 +283,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order is successfully fetched.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
   @spec fetch_order(String.t(), ExAcme.AccountKey.t(), client()) ::
@@ -457,6 +461,7 @@ defmodule ExAcme do
 
     - `{:ok, challenge}` - If the challenge validation request is successfully sent, returns the
       updated challenge information.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the validation request.
   """
   @spec start_challenge_validation(String.t(), ExAcme.AccountKey.t(), client()) ::
