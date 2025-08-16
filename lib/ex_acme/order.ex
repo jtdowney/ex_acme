@@ -19,6 +19,8 @@ defmodule ExAcme.Order do
     - `certificate_url` - URL to retrieve the issued certificate.
   """
 
+  alias X509.Certificate.Extension
+
   defstruct [
     :url,
     :status,
@@ -92,7 +94,7 @@ defmodule ExAcme.Order do
         csr =
           X509.CSR.new(private_key, "CN=#{cn}",
             extension_request: [
-              X509.Certificate.Extension.subject_alt_name(subject_alt_names)
+              Extension.subject_alt_name(subject_alt_names)
             ]
           )
 

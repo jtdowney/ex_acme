@@ -139,20 +139,7 @@ defmodule ExAcme.Request do
           send_request(request, key, client)
 
         {status, body} when status >= 400 ->
-          case extract_retry_after(headers) do
-            {:ok, retry_after_seconds} ->
-              {:error, {:retry_after, retry_after_seconds}}
-
-            :error ->
-              body =
-                if body == "" do
-                  {:http_error, status}
-                else
-                  body
-                end
-
-              {:error, body}
-          end
+          handle_error_response(headers, status, body)
 
         {_, body} ->
           {:ok, %{body: body, headers: Map.new(headers)}}
@@ -167,49 +154,66 @@ defmodule ExAcme.Request do
     end
   end
 
+  defp handle_error_response(headers, status, body) do
+    case extract_retry_after(headers) do
+      {:ok, retry_after_seconds} ->
+        {:error, {:retry_after, retry_after_seconds}}
+
+      :error ->
+        error_body = if body == "", do: {:http_error, status}, else: body
+        {:error, error_body}
+    end
+  end
+
   defp extract_retry_after(headers) do
     case Map.get(headers, "retry-after") do
       [value | _] when is_binary(value) ->
         parse_retry_after(value)
+
       _ ->
         :error
     end
   end
 
   def parse_retry_after(value) do
+    parse_integer_seconds(value) ||
+      parse_iso8601_datetime(value) ||
+      parse_http_date(value) ||
+      :error
+  end
+
+  defp parse_integer_seconds(value) do
     case Integer.parse(value) do
-      {seconds, ""} when seconds >= 0 ->
-        {:ok, seconds}
+      {seconds, ""} when seconds >= 0 -> {:ok, seconds}
+      _ -> nil
+    end
+  end
+
+  defp parse_iso8601_datetime(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, datetime, _offset} -> calculate_seconds_from_now(datetime)
+      _ -> nil
+    end
+  end
+
+  defp parse_http_date(value) do
+    case :httpd_util.convert_request_date(String.to_charlist(value)) do
+      {{year, month, day}, {hour, minute, second}} ->
+        case DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second), "Etc/UTC") do
+          {:ok, datetime} -> calculate_seconds_from_now(datetime)
+          _ -> nil
+        end
 
       _ ->
-        case DateTime.from_iso8601(value) do
-          {:ok, datetime, _offset} ->
-            now = DateTime.utc_now()
-            seconds = DateTime.diff(datetime, now)
-            if seconds > 0, do: {:ok, seconds}, else: :error
-
-          {:error, _} ->
-            try do
-              case :httpd_util.convert_request_date(String.to_charlist(value)) do
-                {{year, month, day}, {hour, minute, second}} ->
-                  case DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second), "Etc/UTC") do
-                    {:ok, datetime} ->
-                      now = DateTime.utc_now()
-                      seconds = DateTime.diff(datetime, now)
-                      if seconds > 0, do: {:ok, seconds}, else: :error
-
-                    {:error, _} ->
-                      :error
-                  end
-
-                _ ->
-                  :error
-              end
-            rescue
-              _ -> :error
-            end
-        end
+        nil
     end
+  rescue
+    _ -> nil
+  end
+
+  defp calculate_seconds_from_now(datetime) do
+    seconds = DateTime.diff(datetime, DateTime.utc_now())
+    if seconds > 0, do: {:ok, seconds}
   end
 
   defp sign_request(url, body, key, nonce) do
