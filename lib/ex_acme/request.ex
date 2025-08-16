@@ -190,7 +190,25 @@ defmodule ExAcme.Request do
             if seconds > 0, do: {:ok, seconds}, else: :error
 
           {:error, _} ->
-            :error
+            try do
+              case :httpd_util.convert_request_date(String.to_charlist(value)) do
+                {{year, month, day}, {hour, minute, second}} ->
+                  case DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second), "Etc/UTC") do
+                    {:ok, datetime} ->
+                      now = DateTime.utc_now()
+                      seconds = DateTime.diff(datetime, now)
+                      if seconds > 0, do: {:ok, seconds}, else: :error
+
+                    {:error, _} ->
+                      :error
+                  end
+
+                _ ->
+                  :error
+              end
+            rescue
+              _ -> :error
+            end
         end
     end
   end
