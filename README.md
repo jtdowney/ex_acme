@@ -117,12 +117,16 @@ for auth_url <- order.authorizations do
     {:ok, _validated_challenge} = ExAcme.start_challenge_validation(challenge.url, account_key, MyAcme)
 
     # Poll for challenge completion with proper backoff handling
-    validated_challenge = poll_until_valid(challenge.url, account_key, MyAcme)
+    case poll_until_valid(challenge.url, account_key, MyAcme) do
+      {:ok, validated_challenge} ->
+        if validated_challenge.status == "valid" do
+          IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
+        else
+          IO.puts("Challenge for #{authorization.identifier["value"]} failed.")
+        end
 
-    if validated_challenge.status == "valid" do
-      IO.puts("Challenge for #{authorization.identifier["value"]} validated successfully.")
-    else
-      IO.puts("Challenge for #{authorization.identifier["value"]} failed.")
+      {:error, reason} ->
+        IO.puts("Failed to validate challenge for #{authorization.identifier["value"]}: #{inspect(reason)}")
     end
   else
     IO.puts("No challenge found for #{authorization.identifier["value"]}.")
