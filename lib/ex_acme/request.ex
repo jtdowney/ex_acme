@@ -169,9 +169,8 @@ defmodule ExAcme.Request do
 
   defp extract_retry_after(headers) do
     case Map.get(headers, "retry-after") do
-      [value] when is_binary(value) ->
+      [value | _] when is_binary(value) ->
         parse_retry_after(value)
-
       _ ->
         :error
     end
