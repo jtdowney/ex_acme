@@ -179,7 +179,7 @@ end
 
 ## Handling Retry-After Responses
 
-ExAcme surfaces `Retry-After` headers from ACME servers by returning `{:error, {:retry_after, seconds}}` when the server indicates you should wait before retrying. Here's how to implement proper polling with backoff:
+ExAcme surfaces `Retry-After` headers from ACME servers by returning `{:retry_after, seconds}` when the server indicates you should wait before retrying. Here's how to implement proper polling with backoff:
 
 ```elixir
 defp poll_until_valid(url, account_key, client, max_attempts \\ 10) do
@@ -208,7 +208,7 @@ defp poll_until_valid(url, account_key, client, max_attempts, attempt) do
           poll_until_valid(url, account_key, client, max_attempts - 1, attempt + 1)
       end
 
-    {:error, {:retry_after, seconds}} ->
+    {:retry_after, seconds} ->
       # Server told us exactly how long to wait
       IO.puts("Server requested retry after #{seconds} seconds")
       :timer.sleep(seconds * 1000)

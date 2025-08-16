@@ -118,12 +118,12 @@ defmodule ExAcme.Request do
   ## Returns
 
     - `{:ok, %{body: body(), headers: map()}}` - On successful request.
-    - `{:error, {:retry_after, seconds}}` - When the server returns a Retry-After header,
+    - `{:retry_after, seconds}` - When the server returns a Retry-After header,
       indicating the client should wait the specified number of seconds before retrying.
     - `{:error, reason}` - On other failures, with details about the error.
   """
   @spec send_request(t(), ExAcme.AccountKey.t() | JOSE.JWK.t(), ExAcme.client()) ::
-          {:ok, %{body: body(), headers: map()}} | {:error, any()}
+          {:ok, %{body: body(), headers: map()}} | {:retry_after, non_neg_integer()} | {:error, any()}
   def send_request(request, key, client) do
     user_agent = "ExAcme/#{Application.spec(:ex_acme, :vsn)}"
     headers = [content_type: @content_type, user_agent: user_agent]
@@ -157,7 +157,7 @@ defmodule ExAcme.Request do
   defp handle_error_response(headers, status, body) do
     case extract_retry_after(headers) do
       {:ok, retry_after_seconds} ->
-        {:error, {:retry_after, retry_after_seconds}}
+        {:retry_after, retry_after_seconds}
 
       :error ->
         error_body = if body == "", do: {:http_error, status}, else: body
