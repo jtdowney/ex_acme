@@ -65,6 +65,10 @@ case ExAcme.register_account(registration, key, MyAcme) do
     IO.puts("Account registered successfully!")
     IO.inspect(account)
 
+  {:retry_after, seconds} ->
+    IO.puts("Server requested retry after #{seconds} seconds")
+    # Handle retry logic here
+
   {:error, reason} ->
     IO.puts("Failed to register account:")
     IO.inspect(reason)
@@ -90,6 +94,10 @@ case ExAcme.submit_order(order_request, account_key, MyAcme) do
   {:ok, order} ->
     IO.puts("Order created successfully!")
     IO.inspect(order)
+
+  {:retry_after, seconds} ->
+    IO.puts("Server requested retry after #{seconds} seconds")
+    # Handle retry logic here
 
   {:error, reason} ->
     IO.puts("Failed to create order:")
@@ -153,6 +161,10 @@ case ExAcme.finalize_order(order.finalize_url, csr, account_key, MyAcme) do
     IO.puts("Order finalized successfully!")
     IO.inspect(finalized_order)
 
+  {:retry_after, seconds} ->
+    IO.puts("Server requested retry after #{seconds} seconds")
+    # Handle retry logic here
+
   {:error, reason} ->
     IO.puts("Failed to finalize order:")
     IO.inspect(reason)
@@ -170,6 +182,10 @@ case ExAcme.fetch_certificates(finalized_order.certificate_url, account_key, MyA
       IO.puts("Fetched Certificate:")
       IO.puts(X509.Certificate.to_pem(cert))
     end)
+
+  {:retry_after, seconds} ->
+    IO.puts("Server requested retry after #{seconds} seconds")
+    # Handle retry logic here
 
   {:error, reason} ->
     IO.puts("Failed to fetch certificate:")
