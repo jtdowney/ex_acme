@@ -306,6 +306,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order is successfully finalized.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the finalization process.
   """
   @spec finalize_order(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), client()) ::
@@ -338,6 +339,7 @@ defmodule ExAcme do
     - `{:ok, account, account_key}` - If the registration is successful, returns the account
       information and the corresponding account key. An account key is the provided JSON Web Key
       (JWK) and the Key Identifier (kid) returned by the server.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during registration.
   """
   @spec register_account(ExAcme.RegistrationBuilder.t() | map(), JOSE.JWK.t(), client(), keyword()) ::
@@ -383,6 +385,7 @@ defmodule ExAcme do
   ## Returns
 
     - `:ok` - If the certificate is successfully revoked.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the revocation process.
   """
   @spec revoke_certificate(ExAcme.RevocationBuilder.t() | map(), ExAcme.AccountKey.t(), ExAcme.client()) ::
@@ -424,6 +427,7 @@ defmodule ExAcme do
 
     - `{:ok, account_key}` - If the key rotation is successful, returns the new account key, which
        is the provided JSON Web Key (JWK) and the Key ID (kid).
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during key rotation.
   """
   @spec rotate_account_key(ExAcme.AccountKey.t(), JOSE.JWK.t(), client()) ::
@@ -491,6 +495,7 @@ defmodule ExAcme do
   ## Returns
 
     - `{:ok, order}` - If the order submission is successful, returns the order information.
+    - `{:error, {:retry_after, seconds}}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during order submission.
   """
   @spec submit_order(ExAcme.OrderBuilder.t() | map(), ExAcme.AccountKey.t(), client()) ::
