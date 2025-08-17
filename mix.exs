@@ -22,7 +22,7 @@ defmodule ExAcme.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :inets]
+      extra_applications: [:inets]
     ]
   end
 
