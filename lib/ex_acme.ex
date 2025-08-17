@@ -102,8 +102,8 @@ defmodule ExAcme do
 
   defp pop_nonce_from_state(state) do
     case Map.pop(state, :nonce) do
-      {nil, state} -> {{:need_fetch, state}, state}
-      {nonce, state} -> {{:ok, nonce}, state}
+      {nil, next_state} -> {{:need_fetch, next_state}, next_state}
+      {nonce, next_state} -> {{:ok, nonce}, next_state}
     end
   end
 
