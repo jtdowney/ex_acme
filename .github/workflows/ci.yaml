@@ -10,6 +10,8 @@ jobs:
   test:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COVERALLS_PARALLEL: true
+      COVERALLS_FLAG_NAME: elixir-${{ matrix.versions.elixir }}-otp-${{ matrix.versions.otp }}
     strategy:
       matrix:
         versions:
@@ -53,8 +55,13 @@ jobs:
       - name: Pull Latest Docker Images
         run: docker compose pull
 
-      - name: Run Tests
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix coveralls.github
+      - name: Run Tests with Coverage
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix coveralls.json
+
+      - name: Upload Coverage to Coveralls
+        continue-on-error: true
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix coveralls.post || echo "::warning::Failed to upload coverage to Coveralls - service may be temporarily unavailable"
 
       - name: Type Check
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml run ex_acme mix dialyzer --format github
@@ -62,3 +69,14 @@ jobs:
       - name: Tear Down Containers
         if: always()
         run: docker compose down
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - name: Coveralls Finished
+        continue-on-error: true
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
