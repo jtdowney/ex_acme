@@ -58,7 +58,7 @@ defmodule ExAcme do
       directory URL, or a custom directory URL.
     - Other options to pass to `Agent` like `:name`.
   """
-  @spec start_link(Keyword.t()) :: client()
+  @spec start_link(Keyword.t()) :: {:ok, client()} | {:error, term()}
   def start_link(options) do
     options = Keyword.update!(options, :directory_url, &expand_directory/1)
     directory_url = Keyword.fetch!(options, :directory_url)
@@ -91,16 +91,20 @@ defmodule ExAcme do
   """
   @spec current_nonce(client()) :: {:ok, String.t()} | {:error, term()}
   def current_nonce(client) do
-    Agent.get_and_update(client, fn state ->
-      case Map.pop(state, :nonce) do
-        {nil, state} ->
-          result = fetch_nonce(state)
-          {result, state}
+    case Agent.get_and_update(client, &pop_nonce_from_state/1) do
+      {:ok, nonce} ->
+        {:ok, nonce}
 
-        {nonce, state} ->
-          {{:ok, nonce}, state}
-      end
-    end)
+      {:need_fetch, state} ->
+        fetch_nonce(state)
+    end
+  end
+
+  defp pop_nonce_from_state(state) do
+    case Map.pop(state, :nonce) do
+      {nil, next_state} -> {{:need_fetch, next_state}, next_state}
+      {nonce, next_state} -> {{:ok, nonce}, next_state}
+    end
   end
 
   @doc ~S"""
