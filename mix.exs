@@ -5,7 +5,7 @@ defmodule ExAcme.MixProject do
     [
       app: :ex_acme,
       name: "ExAcme",
-      version: "0.5.2",
+      version: "0.6.0",
       elixir: "~> 1.15",
       source_url: "https://github.com/jtdowney/ex_acme",
       start_permanent: Mix.env() == :prod,

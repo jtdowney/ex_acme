@@ -1,5 +1,15 @@
 # ExAcme Changelog
 
+## 0.6.0 (2025-08-21)
+
+- Added support for Retry-After headers in ACME responses to improve server interaction reliability.
+- Enhanced nonce management concurrency to prevent blocking and races in high-traffic scenarios.
+- Added OTP 28 support and worked around jose-erlang compatibility issues.
+- Added validation for empty identifiers in OrderBuilder and Order.to_csr/2 to prevent invalid requests.
+- Fixed atom exhaustion vulnerability in to_camel_case function and improved key mixing.
+- Improved error handling and type specifications across various modules.
+- Updated documentation with examples for handling retry_after responses.
+
 ## 0.5.2 (2025-03-06)
 
 - Added sugar to `ExAcme.OrderBuilder.add_dns_identifier/2`, `ExAcme.RegistrationBuilder.contacts/2`, and improved `ExAcme.RevocationBuilder.certificate/2`.
