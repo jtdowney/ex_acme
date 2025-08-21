@@ -61,10 +61,10 @@ defmodule ExAcme.MixProject do
       {:faker, "~> 0.18.0", only: [:dev, :test]},
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
-      {:mix_test_watch, "~> 1.2", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 1.3", only: [:dev, :test], runtime: false},
       {:req, "~> 0.5.8"},
       {:styler, "~> 1.3", only: [:dev, :test], runtime: false},
-      {:x509, "~> 0.8.10"}
+      {:x509, "~> 0.9.2"}
     ]
   end
 
