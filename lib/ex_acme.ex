@@ -44,7 +44,34 @@ defmodule ExAcme do
     - `JOSE.JWK` struct representing the generated key pair.
   """
   def generate_key(algorithm \\ "ES256") do
-    JOSE.JWS.generate_key(%{"alg" => algorithm})
+    case algorithm do
+      "ES256" -> generate_es256_key()
+      _ -> JOSE.JWS.generate_key(%{"alg" => algorithm})
+    end
+  end
+
+  # Private function to generate ES256 keys using :crypto directly
+  # This avoids OTP 28 compatibility issues with jose-erlang
+  defp generate_es256_key do
+    # Generate EC key pair using Erlang's crypto module
+    {public_key_point, private_key_scalar} = :crypto.generate_key(:ecdh, :secp256r1)
+
+    # Extract x and y coordinates from the uncompressed public key point
+    # Format: 0x04 || x (32 bytes) || y (32 bytes)
+    <<0x04, x::binary-size(32), y::binary-size(32)>> = public_key_point
+
+    # Create JWK map with base64url-encoded components
+    jwk_map = %{
+      "kty" => "EC",
+      "crv" => "P-256",
+      "alg" => "ES256",
+      "x" => Base.url_encode64(x, padding: false),
+      "y" => Base.url_encode64(y, padding: false),
+      "d" => Base.url_encode64(private_key_scalar, padding: false)
+    }
+
+    # Convert to JOSE.JWK struct
+    JOSE.JWK.from_map(jwk_map)
   end
 
   @doc ~S"""

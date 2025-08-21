@@ -59,17 +59,106 @@ defmodule ExAcmeTest do
   end
 
   test "multiple concurrent nonce requests", %{client: client} do
-    tasks = for _i <- 1..5 do
-      Task.async(fn ->
-        case ExAcme.current_nonce(client) do
-          {:ok, nonce} when is_binary(nonce) -> :ok
-          error -> error
-        end
-      end)
-    end
+    tasks =
+      for _i <- 1..5 do
+        Task.async(fn ->
+          case ExAcme.current_nonce(client) do
+            {:ok, nonce} when is_binary(nonce) -> :ok
+            error -> error
+          end
+        end)
+      end
 
     results = Task.await_many(tasks, 5000)
 
     assert Enum.all?(results, &(&1 == :ok))
+  end
+
+  describe "generate_key/1" do
+    test "generates ES256 key by default" do
+      key = ExAcme.generate_key()
+
+      assert %JOSE.JWK{} = key
+
+      # Check that the key has the correct algorithm
+      {_jwk, public_map} = JOSE.JWK.to_public_map(key)
+      assert public_map["alg"] == "ES256"
+      assert public_map["kty"] == "EC"
+      assert public_map["crv"] == "P-256"
+
+      # Check that x and y coordinates are present and properly formatted
+      assert is_binary(public_map["x"])
+      assert is_binary(public_map["y"])
+      assert String.length(public_map["x"]) > 0
+      assert String.length(public_map["y"]) > 0
+    end
+
+    test "generates ES256 key when explicitly requested" do
+      key = ExAcme.generate_key("ES256")
+
+      assert %JOSE.JWK{} = key
+
+      {_jwk, public_map} = JOSE.JWK.to_public_map(key)
+      assert public_map["alg"] == "ES256"
+      assert public_map["kty"] == "EC"
+      assert public_map["crv"] == "P-256"
+    end
+
+    test "generates different keys on each call" do
+      key1 = ExAcme.generate_key()
+      key2 = ExAcme.generate_key()
+
+      {_jwk1, public_map1} = JOSE.JWK.to_public_map(key1)
+      {_jwk2, public_map2} = JOSE.JWK.to_public_map(key2)
+
+      # Keys should be different
+      assert public_map1["x"] != public_map2["x"]
+      assert public_map1["y"] != public_map2["y"]
+    end
+
+    test "generated key can be used for signing" do
+      key = ExAcme.generate_key()
+      payload = "test payload"
+      header = %{"alg" => "ES256", "typ" => "JWT"}
+
+      # Should be able to sign without error
+      {_jws, signed_payload} = JOSE.JWK.sign(payload, header, key)
+      assert is_map(signed_payload)
+
+      # Should be able to peek at the payload
+      assert JOSE.JWS.peek_payload(signed_payload) == payload
+    end
+
+    test "generated key can produce thumbprint" do
+      key = ExAcme.generate_key()
+
+      thumbprint = JOSE.JWK.thumbprint(key)
+      assert is_binary(thumbprint)
+      assert String.length(thumbprint) > 0
+
+      # Thumbprint should be consistent for the same key
+      assert JOSE.JWK.thumbprint(key) == thumbprint
+    end
+
+    test "fallback to JOSE for non-ES256 algorithms" do
+      # This should still work for other algorithms
+      key = ExAcme.generate_key("RS256")
+
+      assert %JOSE.JWK{} = key
+
+      {_jwk, public_map} = JOSE.JWK.to_public_map(key)
+      assert public_map["alg"] == "RS256"
+      assert public_map["kty"] == "RSA"
+    end
+
+    test "generated key works with AccountKey.new/2" do
+      key = ExAcme.generate_key()
+      account_key = ExAcme.AccountKey.new(key, "test-kid")
+
+      assert %ExAcme.AccountKey{} = account_key
+      assert account_key.algorithm == "ES256"
+      assert account_key.kid == "test-kid"
+      assert account_key.key == key
+    end
   end
 end
