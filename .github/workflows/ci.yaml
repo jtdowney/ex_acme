@@ -10,8 +10,9 @@ jobs:
   test:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      COVERALLS_PARALLEL: true
       COVERALLS_FLAG_NAME: elixir-${{ matrix.versions.elixir }}-otp-${{ matrix.versions.otp }}
+      COVERALLS_PARALLEL: true
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     strategy:
       matrix:
         versions:

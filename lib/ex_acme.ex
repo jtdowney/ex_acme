@@ -43,6 +43,8 @@ defmodule ExAcme do
 
     - `JOSE.JWK` struct representing the generated key pair.
   """
+  @spec generate_key() :: JOSE.JWK.t()
+  @spec generate_key(String.t()) :: JOSE.JWK.t()
   def generate_key(algorithm \\ "ES256") do
     case algorithm do
       "ES256" -> generate_es256_key()
