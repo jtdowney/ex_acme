@@ -24,9 +24,9 @@ jobs:
             { elixir: "1.18.4", otp: "26.2.5.15" },
             { elixir: "1.18.4", otp: "27.3.4.3" },
             { elixir: "1.18.4", otp: "28.1.1" },
-            { elixir: "1.19.2", otp: "26.2.5.15" },
-            { elixir: "1.19.2", otp: "27.3.4.3" },
-            { elixir: "1.19.2", otp: "28.1.1" },
+            { elixir: "1.19.3", otp: "26.2.5.15" },
+            { elixir: "1.19.3", otp: "27.3.4.3" },
+            { elixir: "1.19.3", otp: "28.1.1" },
           ]
     runs-on: ubuntu-latest
 
