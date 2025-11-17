@@ -15,8 +15,19 @@ defmodule ExAcme.MixProject do
       description: description(),
       docs: docs(),
       deps: deps(),
-      preferred_cli_env: preferred_cli_env(),
       dialyzer: dialyzer()
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ]
     ]
   end
 
@@ -65,16 +76,6 @@ defmodule ExAcme.MixProject do
       {:req, "~> 0.5.8"},
       {:styler, "~> 1.3", only: [:dev, :test], runtime: false},
       {:x509, "~> 0.9.2"}
-    ]
-  end
-
-  defp preferred_cli_env do
-    [
-      coveralls: :test,
-      "coveralls.detail": :test,
-      "coveralls.post": :test,
-      "coveralls.html": :test,
-      "coveralls.cobertura": :test
     ]
   end
 
