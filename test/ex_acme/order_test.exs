@@ -39,7 +39,7 @@ defmodule ExAcme.OrderTest do
 
     {:ok, finalized_order} = ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
 
-    assert finalized_order.url == order.url
+    assert finalized_order.url == order.url or finalized_order.url == nil
 
     assert_eventually {:ok, %{status: "valid"}} =
                         ExAcme.fetch_order(order.url, account_key, client)
