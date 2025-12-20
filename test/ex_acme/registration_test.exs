@@ -43,7 +43,7 @@ defmodule ExAcme.RegistrationTest do
       )
 
     assert body["status"] == 403
-    assert body["type"] == "urn:ietf:params:acme:error:agreementRequired"
+    assert body["type"] == "urn:ietf:params:acme:error:userActionRequired"
   end
 
   test "only return existing with no existing account", %{client: client} do
