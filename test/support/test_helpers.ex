@@ -40,7 +40,7 @@ defmodule ExAcme.TestHelpers do
     challenge = ExAcme.Challenge.find_by_type(authorization, "dns-01")
     %{"type" => "dns", "value" => domain_name} = authorization.identifier
     ExAcme.TestHelpers.set_dns_challenge(domain_name, challenge.token, account_key)
-    ExAcme.start_challenge_validation(challenge.url, account_key, client)
+    ExAcme.start_challenge_validation(challenge, account_key, client)
 
     eventually {:ok, %{status: "valid"}} =
                  ExAcme.fetch_challenge(challenge.url, account_key, client)
@@ -54,7 +54,7 @@ defmodule ExAcme.TestHelpers do
     private_key = X509.PrivateKey.new_ec(:secp256r1)
     {:ok, csr} = ExAcme.Order.to_csr(order, private_key)
 
-    ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
+    ExAcme.finalize_order(order, csr, account_key, client)
 
     eventually {:ok, %{status: "valid", certificate_url: certificate_url}} =
                  ExAcme.fetch_order(order.url, account_key, client)

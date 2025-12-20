@@ -122,7 +122,7 @@ for auth_url <- order.authorizations do
     setup_challenge(authorization.identifier["value"], value)
 
     # Trigger validation
-    {:ok, _validated_challenge} = ExAcme.start_challenge_validation(challenge.url, account_key, MyAcme)
+    {:ok, _validated_challenge} = ExAcme.start_challenge_validation(challenge, account_key, MyAcme)
 
     # Poll for challenge completion with proper backoff handling
     case poll_until_valid(challenge.url, account_key, MyAcme) do
@@ -156,7 +156,7 @@ private_key = X509.PrivateKey.new_ec(:secp256r1)
 csr = Order.to_csr(order, private_key)
 
 # Finalize the order by submitting the CSR
-case ExAcme.finalize_order(order.finalize_url, csr, account_key, MyAcme) do
+case ExAcme.finalize_order(order, csr, account_key, MyAcme) do
   {:ok, finalized_order} ->
     IO.puts("Order finalized successfully!")
     IO.inspect(finalized_order)

@@ -24,7 +24,7 @@ defmodule ExAcme.CertificateTest do
     ExAcme.TestHelpers.validate_order(order, account_key, client)
     {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
 
-    ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
+    ExAcme.finalize_order(order, csr, account_key, client)
 
     assert_eventually {:ok, %{status: "valid", certificate_url: certificate_url}} =
                         ExAcme.fetch_order(order.url, account_key, client)
@@ -38,7 +38,7 @@ defmodule ExAcme.CertificateTest do
     ExAcme.TestHelpers.validate_order(order, account_key, client)
     {:ok, csr} = ExAcme.Order.to_csr(order, @private_key)
 
-    ExAcme.finalize_order(order.finalize_url, csr, account_key, client)
+    ExAcme.finalize_order(order, csr, account_key, client)
 
     assert_eventually {:ok, %{status: "valid", certificate_url: certificate_url}} =
                         ExAcme.fetch_order(order.url, account_key, client)
