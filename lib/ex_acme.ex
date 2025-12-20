@@ -326,7 +326,7 @@ defmodule ExAcme do
     request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
 
     with {:ok, %{body: body, headers: headers}} <- ExAcme.Request.send_request(request, account_key, client) do
-      location = headers |> Map.get("location") |> List.first()
+      location = headers |> Map.get("location", []) |> List.first()
       {:ok, ExAcme.Order.from_response(location, body)}
     end
   end
