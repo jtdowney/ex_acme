@@ -303,11 +303,13 @@ defmodule ExAcme do
   end
 
   @doc """
-  Finalizes an order by sending a Certificate Signing Request (CSR) to the specified URL.
+  Finalizes an order by sending a Certificate Signing Request (CSR).
 
   ## Parameters
 
-    - `finalize_url` - The URL to finalize the order.
+    - `order` - The `ExAcme.Order` struct to finalize. Must have `url` and `finalize_url` fields set.
+      You can construct this from stored URLs without fetching:
+      `%ExAcme.Order{url: stored_url, finalize_url: stored_finalize_url}`
     - `csr` - The Certificate Signing Request (CSR) to send for finalization. You can generate a
        CSR using the `ExAcme.Order.to_csr/2` function.
     - `account_key` - The account key used for authentication.
@@ -319,14 +321,14 @@ defmodule ExAcme do
     - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the finalization process.
   """
-  @spec finalize_order(String.t(), X509.CSR.t(), ExAcme.AccountKey.t(), client()) ::
+  @spec finalize_order(ExAcme.Order.t(), X509.CSR.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Order.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
-  def finalize_order(finalize_url, csr, account_key, client) do
+  def finalize_order(%ExAcme.Order{url: order_url, finalize_url: finalize_url}, csr, account_key, client) do
     csr = csr |> X509.CSR.to_der() |> Base.url_encode64(padding: false)
     request = ExAcme.Request.build_update(finalize_url, %{csr: csr})
 
     with {:ok, %{body: body, headers: headers}} <- ExAcme.Request.send_request(request, account_key, client) do
-      location = headers |> Map.get("location", []) |> List.first()
+      location = headers |> Map.get("location", []) |> List.first() || order_url
       {:ok, ExAcme.Order.from_response(location, body)}
     end
   end
@@ -459,7 +461,7 @@ defmodule ExAcme do
   end
 
   @doc """
-  Starts the validation process for a challenge by sending a request to the specified challenge URL.
+  Starts the validation process for a challenge.
 
   This function notifies the ACME server that the client is ready for the server to attempt validation
   of the challenge. The server will then verify that the requirements of the challenge have been
@@ -467,7 +469,9 @@ defmodule ExAcme do
 
   ## Parameters
 
-    - `url` - The URL of the challenge to validate.
+    - `challenge` - The `ExAcme.Challenge` struct to validate. Must have `url` field set.
+      You can construct this from a stored URL without fetching:
+      `%ExAcme.Challenge{url: stored_url}`
     - `account_key` - The account key used for authentication.
     - `client` - The pid or name of the ExAcme client agent.
 
@@ -478,9 +482,9 @@ defmodule ExAcme do
     - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the validation request.
   """
-  @spec start_challenge_validation(String.t(), ExAcme.AccountKey.t(), client()) ::
+  @spec start_challenge_validation(ExAcme.Challenge.t(), ExAcme.AccountKey.t(), client()) ::
           {:ok, ExAcme.Challenge.t()} | {:retry_after, non_neg_integer()} | {:error, any()}
-  def start_challenge_validation(url, account_key, client) do
+  def start_challenge_validation(%ExAcme.Challenge{url: url}, account_key, client) do
     request = ExAcme.Request.build_update(url, %{})
 
     with {:ok, %{body: body}} <- ExAcme.Request.send_request(request, account_key, client) do
