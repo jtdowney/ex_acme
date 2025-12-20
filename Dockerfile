@@ -4,6 +4,8 @@ ARG DEBIAN_VERSION=trixie-20251103-slim
 
 ARG IMAGE="docker.io/hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 
+FROM ghcr.io/letsencrypt/pebble:latest AS pebble
+
 FROM ${IMAGE}
 
 RUN apt-get update -y && \
@@ -11,7 +13,7 @@ RUN apt-get update -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD priv/cert/pebble.minica.pem /usr/local/share/ca-certificates/pebble.minica.crt
+COPY --from=pebble /test/certs/pebble.minica.pem /usr/local/share/ca-certificates/pebble.minica.crt
 RUN update-ca-certificates
 
 WORKDIR /app
