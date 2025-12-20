@@ -1,5 +1,14 @@
 # ExAcme Changelog
 
+## 0.7.0 (2025-12-20)
+
+### Breaking Changes
+
+- `finalize_order/4` now accepts an `Order` struct instead of a finalize URL string (#12).
+- `start_challenge_validation/3` now accepts a `Challenge` struct instead of a URL string (#12).
+
+This aligns with idiomatic Elixir patterns and fixes an issue where `order.url` could be nil when the Location header was missing.
+
 ## 0.6.1 (2025-12-20)
 
 - Fixed Pebble ACME server compatibility (#11).
