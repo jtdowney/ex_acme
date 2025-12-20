@@ -1,5 +1,10 @@
 # ExAcme Changelog
 
+## 0.6.1 (2025-12-20)
+
+- Fixed Pebble ACME server compatibility (#11).
+- Fixed EC key generation for OTP 28.
+
 ## 0.6.0 (2025-08-21)
 
 - Added support for Retry-After headers in ACME responses to improve server interaction reliability.
