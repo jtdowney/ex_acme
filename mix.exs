@@ -73,7 +73,7 @@ defmodule ExAcme.MixProject do
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
       {:mix_test_watch, "~> 1.3", only: [:dev, :test], runtime: false},
-      {:req, "~> 0.5.8"},
+      {:req, "~> 0.6.3"},
       {:styler, "~> 1.3", only: [:dev, :test], runtime: false},
       {:x509, "~> 0.9.2"}
     ]

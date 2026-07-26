@@ -1,5 +1,9 @@
 # ExAcme Changelog
 
+## Unreleased
+
+- Updated Req to 0.6.3 or later to address response decompression and multipart header injection vulnerabilities.
+
 ## 0.7.0 (2025-12-20)
 
 ### Breaking Changes
