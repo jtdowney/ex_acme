@@ -69,7 +69,7 @@ defmodule ExAcme.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:excoveralls, "~> 0.18.5", only: [:dev, :test]},
-      {:faker, "~> 0.18.0", only: [:dev, :test]},
+      {:faker, "~> 0.19.0", only: [:dev, :test]},
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
       {:mix_test_watch, "~> 1.3", only: [:dev, :test], runtime: false},
