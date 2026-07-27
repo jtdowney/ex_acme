@@ -26,7 +26,7 @@ defmodule ExAcme.RequestTest do
       future_time = DateTime.utc_now() |> DateTime.add(300, :second) |> DateTime.to_iso8601()
 
       assert {:ok, seconds} = Request.parse_retry_after(future_time)
-      assert seconds >= 299 and seconds <= 301
+      assert_in_delta seconds, 300, 5
     end
 
     test "returns zero for past datetime" do
@@ -41,13 +41,13 @@ defmodule ExAcme.RequestTest do
       rfc1123_date = Calendar.strftime(future_time, "%a, %d %b %Y %H:%M:%S GMT")
 
       assert {:ok, seconds} = Request.parse_retry_after(rfc1123_date)
-      assert seconds >= 239 and seconds <= 241
+      assert_in_delta seconds, 240, 5
 
       # Test RFC 850 format
       rfc850_date = Calendar.strftime(future_time, "%A, %d-%b-%y %H:%M:%S GMT")
 
       assert {:ok, seconds} = Request.parse_retry_after(rfc850_date)
-      assert seconds >= 239 and seconds <= 241
+      assert_in_delta seconds, 240, 5
     end
 
     test "returns zero for past HTTP-date" do
@@ -73,14 +73,14 @@ defmodule ExAcme.RequestTest do
       iso8601_with_space = "  #{DateTime.to_iso8601(future_time)}  "
 
       assert {:ok, seconds} = Request.parse_retry_after(iso8601_with_space)
-      assert seconds >= 299 and seconds <= 301
+      assert_in_delta seconds, 300, 5
 
       # Test with HTTP-date format and whitespace
       rfc1123_date = Calendar.strftime(future_time, "%a, %d %b %Y %H:%M:%S GMT")
       rfc1123_with_space = "\t#{rfc1123_date}\n"
 
       assert {:ok, seconds} = Request.parse_retry_after(rfc1123_with_space)
-      assert seconds >= 299 and seconds <= 301
+      assert_in_delta seconds, 300, 5
     end
   end
 end
