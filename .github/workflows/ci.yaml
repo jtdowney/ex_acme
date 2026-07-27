@@ -14,6 +14,7 @@ jobs:
       COVERALLS_PARALLEL: true
       COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     strategy:
+      fail-fast: false
       matrix:
         versions:
           [
