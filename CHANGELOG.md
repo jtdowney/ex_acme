@@ -1,8 +1,10 @@
 # ExAcme Changelog
 
-## Unreleased
+## 0.8.0 (2026-07-26)
 
 - Updated Req to 0.6.3 or later to address response decompression and multipart header injection vulnerabilities.
+- Raised the minimum Elixir requirement to 1.18 and dropped Elixir and OTP versions that are no longer supported upstream.
+- Updated development and test dependencies.
 
 ## 0.7.0 (2025-12-20)
 
