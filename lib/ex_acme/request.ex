@@ -175,6 +175,50 @@ defmodule ExAcme.Request do
     end
   end
 
+  @doc """
+  Extracts the targets of `Link` headers with the given relation type.
+
+  ACME servers use `Link` headers to point at related resources, such as
+  alternate certificate chains (`rel="alternate"`, RFC 8555 §7.4.2). Relative
+  targets are resolved against `base_url`.
+
+  ## Parameters
+
+    - `headers`: The response headers, as returned by `send_request/3`.
+    - `base_url`: The URL of the request the headers belong to.
+    - `rel`: The relation type to match, e.g. `"alternate"`.
+
+  ## Returns
+
+    - A list of absolute URLs, in the order the server sent them.
+  """
+  @spec link_urls(map(), String.t(), String.t()) :: [String.t()]
+  def link_urls(headers, base_url, rel) do
+    rel = String.downcase(rel)
+
+    headers
+    |> Map.get("link", [])
+    |> Enum.flat_map(&String.split(&1, ~r/,(?=\s*<)/))
+    |> Enum.flat_map(fn link ->
+      with [_, target, params] <- Regex.run(~r/^\s*<([^>]*)>(.*)$/s, link),
+           true <- rel in link_relations(params) do
+        [base_url |> URI.merge(target) |> URI.to_string()]
+      else
+        _ -> []
+      end
+    end)
+  end
+
+  # The `rel` parameter holds a space-separated list of relation types, quoted
+  # or as a bare token (RFC 8288 §3.3).
+  defp link_relations(params) do
+    case Regex.run(~r/;\s*rel\s*=\s*(?:"([^"]*)"|([^\s;,]+))/i, params) do
+      [_, quoted] -> quoted |> String.downcase() |> String.split()
+      [_, "", token] -> [String.downcase(token)]
+      nil -> []
+    end
+  end
+
   @doc false
   def parse_retry_after(value) do
     value = String.trim(value)

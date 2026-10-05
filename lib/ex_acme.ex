@@ -243,6 +243,12 @@ defmodule ExAcme do
     - `url` - The URL of the certificate to fetch.
     - `account_key` - The account key used for authentication.
     - `client` - The pid or name of the ExAcme client agent.
+    - `opts` - Optional keyword list:
+      - `:preferred_chain` - The Common Name of the root the chain should lead
+        to, e.g. `"ISRG Root X1"`. The default chain and every alternate chain
+        the server offers are fetched, and the first one whose topmost
+        certificate is issued by that name is returned. When none matches, the
+        default chain is returned. See `fetch_certificate_chains/3`.
 
   ## Returns
 
@@ -250,14 +256,77 @@ defmodule ExAcme do
     - `{:retry_after, seconds}` - If the server returns a Retry-After header.
     - `{:error, reason}` - If an error occurs during the fetch operation.
   """
-  @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), client()) ::
+  @spec fetch_certificates(String.t(), ExAcme.AccountKey.t(), client(), Keyword.t()) ::
           {:ok, [X509.Certificate.t()]} | {:retry_after, non_neg_integer()} | {:error, any()}
-  def fetch_certificates(url, account_key, client) do
+  def fetch_certificates(url, account_key, client, opts \\ []) do
+    case Keyword.fetch(opts, :preferred_chain) do
+      {:ok, issuer_name} ->
+        with {:ok, chains} <- fetch_certificate_chains(url, account_key, client) do
+          {:ok, select_chain(chains, issuer_name)}
+        end
+
+      :error ->
+        with {:ok, chain, _alternate_urls} <- fetch_chain(url, account_key, client) do
+          {:ok, chain}
+        end
+    end
+  end
+
+  @doc """
+  Fetches the default certificate chain together with every alternate chain
+  the server offers for the same certificate.
+
+  The ACME server advertises alternate chains with `Link: <url>;rel="alternate"`
+  headers on the certificate response (RFC 8555 §7.4.2). Each alternate holds
+  the same end-entity certificate, followed by intermediates leading to a
+  different root.
+
+  ## Parameters
+
+    - `url` - The URL of the certificate to fetch.
+    - `account_key` - The account key used for authentication.
+    - `client` - The pid or name of the ExAcme client agent.
+
+  ## Returns
+
+    - `{:ok, [default_chain | alternate_chains]}` - The default chain first,
+      then the alternates in the order the server listed them.
+    - `{:retry_after, seconds}` - If the server returns a Retry-After header.
+    - `{:error, reason}` - If fetching any of the chains fails.
+  """
+  @spec fetch_certificate_chains(String.t(), ExAcme.AccountKey.t(), client()) ::
+          {:ok, [[X509.Certificate.t()], ...]} | {:retry_after, non_neg_integer()} | {:error, any()}
+  def fetch_certificate_chains(url, account_key, client) do
+    with {:ok, default_chain, alternate_urls} <- fetch_chain(url, account_key, client) do
+      fetch_alternate_chains(alternate_urls, account_key, client, [default_chain])
+    end
+  end
+
+  defp fetch_alternate_chains([], _account_key, _client, chains), do: {:ok, Enum.reverse(chains)}
+
+  defp fetch_alternate_chains([url | rest], account_key, client, chains) do
+    with {:ok, chain, _alternate_urls} <- fetch_chain(url, account_key, client) do
+      fetch_alternate_chains(rest, account_key, client, [chain | chains])
+    end
+  end
+
+  defp fetch_chain(url, account_key, client) do
     request = ExAcme.Request.build_fetch(url)
 
-    with {:ok, %{body: body}} <- ExAcme.Request.send_request(request, account_key, client) do
-      {:ok, X509.from_pem(body)}
+    with {:ok, %{body: body, headers: headers}} <- ExAcme.Request.send_request(request, account_key, client) do
+      {:ok, X509.from_pem(body), ExAcme.Request.link_urls(headers, url, "alternate")}
     end
+  end
+
+  # Same rule as certbot's and lego's `--preferred-chain`: the first chain whose
+  # topmost certificate is issued by `issuer_name`, else the default chain.
+  defp select_chain([default_chain | _] = chains, issuer_name) do
+    Enum.find(chains, default_chain, fn chain ->
+      case List.last(chain) do
+        nil -> false
+        topmost -> X509.Certificate.issuer(topmost, "CN") == [issuer_name]
+      end
+    end)
   end
 
   @doc """

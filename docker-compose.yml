@@ -21,6 +21,7 @@ services:
     environment:
       PEBBLE_WFE_NONCEREJECT: "25"
       PEBBLE_VA_SLEEPTIME: "1"
+      PEBBLE_ALTERNATE_ROOTS: "1"
     ports:
       - 14000:14000
       - 15000:15000
