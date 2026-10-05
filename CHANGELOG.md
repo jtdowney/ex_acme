@@ -1,5 +1,11 @@
 # ExAcme Changelog
 
+## Unreleased
+
+- Added `fetch_certificate_chains/3`, which returns the default certificate chain together with the alternate chains the server advertises via `Link: rel="alternate"` headers (RFC 8555 §7.4.2).
+- Added a `:preferred_chain` option to `fetch_certificates/4` that selects the chain whose topmost certificate is issued by the given root, falling back to the default chain.
+- Added `ExAcme.Request.link_urls/3` for extracting `Link` header targets by relation type.
+
 ## 0.8.0 (2026-07-26)
 
 - Updated Req to 0.6.3 or later to address response decompression and multipart header injection vulnerabilities.

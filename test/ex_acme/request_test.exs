@@ -83,4 +83,59 @@ defmodule ExAcme.RequestTest do
       assert_in_delta seconds, 300, 5
     end
   end
+
+  describe "link_urls/3" do
+    @base_url "https://acme.example/acme/cert/abc"
+
+    test "returns the targets of links with the given relation" do
+      headers = %{
+        "link" => [
+          ~s(<https://acme.example/acme/cert/abc/1>;rel="alternate"),
+          ~s(<https://acme.example/directory>;rel="index"),
+          ~s(<https://acme.example/acme/cert/abc/2>; rel="alternate")
+        ]
+      }
+
+      assert Request.link_urls(headers, @base_url, "alternate") == [
+               "https://acme.example/acme/cert/abc/1",
+               "https://acme.example/acme/cert/abc/2"
+             ]
+    end
+
+    test "splits comma-separated links in a single header" do
+      headers = %{
+        "link" => [~s(<https://acme.example/directory>;rel="index", <https://acme.example/alt/1>;rel="alternate")]
+      }
+
+      assert Request.link_urls(headers, @base_url, "alternate") == ["https://acme.example/alt/1"]
+    end
+
+    test "matches unquoted, multi-valued and differently cased relations" do
+      headers = %{
+        "link" => [
+          "<https://acme.example/alt/1>;rel=alternate",
+          ~s(<https://acme.example/alt/2>;rel="up ALTERNATE"),
+          ~s(<https://acme.example/alt/3>;title="x";REL="Alternate")
+        ]
+      }
+
+      assert Request.link_urls(headers, @base_url, "alternate") == [
+               "https://acme.example/alt/1",
+               "https://acme.example/alt/2",
+               "https://acme.example/alt/3"
+             ]
+    end
+
+    test "resolves relative targets against the request URL" do
+      headers = %{"link" => [~s(</acme/cert/abc/1>;rel="alternate")]}
+
+      assert Request.link_urls(headers, @base_url, "alternate") == ["https://acme.example/acme/cert/abc/1"]
+    end
+
+    test "returns an empty list without matching links" do
+      assert Request.link_urls(%{}, @base_url, "alternate") == []
+      assert Request.link_urls(%{"link" => ["<https://acme.example/x>"]}, @base_url, "alternate") == []
+      assert Request.link_urls(%{"link" => ["garbage"]}, @base_url, "alternate") == []
+    end
+  end
 end
